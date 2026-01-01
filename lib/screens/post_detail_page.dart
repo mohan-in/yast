@@ -1,0 +1,82 @@
+import 'package:flutter/material.dart';
+import '../models/post.dart';
+import '../models/comment.dart';
+import '../services/reddit_service.dart';
+import '../widgets/post_card.dart';
+import '../widgets/comment_widget.dart';
+import '../utils/html_utils.dart';
+
+class PostDetailPage extends StatefulWidget {
+  final Post post;
+  final RedditService redditService;
+
+  const PostDetailPage({
+    super.key,
+    required this.post,
+    required this.redditService,
+  });
+
+  @override
+  State<PostDetailPage> createState() => _PostDetailPageState();
+}
+
+class _PostDetailPageState extends State<PostDetailPage> {
+  late Future<List<Comment>> _commentsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _commentsFuture = widget.redditService.fetchComments(widget.post.permalink);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SelectionArea(
+      child: Scaffold(
+        appBar: AppBar(title: Text(HtmlUtils.unescape(widget.post.title))),
+        body: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: PostCard(
+                post: widget.post,
+              ), // Reuse PostCard for the header
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'Comments',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+              ),
+            ),
+            FutureBuilder<List<Comment>>(
+              future: _commentsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SliverToBoxAdapter(
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                } else if (snapshot.hasError) {
+                  return SliverToBoxAdapter(
+                    child: Center(child: Text('Error: ${snapshot.error}')),
+                  );
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const SliverToBoxAdapter(
+                    child: Center(child: Text('No comments yet.')),
+                  );
+                } else {
+                  return SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      return CommentWidget(comment: snapshot.data![index]);
+                    }, childCount: snapshot.data!.length),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

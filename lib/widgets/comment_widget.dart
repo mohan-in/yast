@@ -1,0 +1,104 @@
+import 'package:flutter/material.dart';
+import '../models/comment.dart';
+import '../utils/html_utils.dart';
+
+class CommentWidget extends StatefulWidget {
+  final Comment comment;
+  final int depth;
+
+  const CommentWidget({super.key, required this.comment, this.depth = 0});
+
+  @override
+  State<CommentWidget> createState() => _CommentWidgetState();
+}
+
+class _CommentWidgetState extends State<CommentWidget> {
+  bool _isCollapsed = false;
+
+  void _toggleCollapse() {
+    setState(() {
+      _isCollapsed = !_isCollapsed;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Only indentation for depth > 0 to avoid wasted space
+    return Padding(
+      padding: EdgeInsets.only(
+        left: widget.depth == 0 ? 0.0 : 8.0,
+        top: 12.0,
+        bottom: 12.0,
+        right: 8.0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(
+                  color: Colors.grey.withValues(alpha: 0.2),
+                  width: 2.0,
+                ),
+              ),
+            ),
+            padding: const EdgeInsets.only(left: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                InkWell(
+                  onTap: _toggleCollapse,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'u/${widget.comment.author}',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          if (_isCollapsed) ...[
+                            const SizedBox(width: 8),
+                            const Icon(Icons.expand_more, size: 16),
+                          ],
+                        ],
+                      ),
+                      // Upvote count removed
+                    ],
+                  ),
+                ),
+                if (!_isCollapsed) ...[
+                  const SizedBox(height: 4),
+                  ...widget.comment.body
+                      .split(RegExp(r'\n\s*\n'))
+                      .where((p) => p.trim().isNotEmpty)
+                      .expand(
+                        (p) => [
+                          Text(HtmlUtils.unescape(p.trim())),
+                          const SizedBox(
+                            height: 6,
+                          ), // Reduced paragraph spacing
+                        ],
+                      )
+                      .toList()
+                    ..removeLast(), // Remove trailing SizedBox
+                ],
+              ],
+            ),
+          ),
+          if (!_isCollapsed && widget.comment.replies.isNotEmpty)
+            Column(
+              children: widget.comment.replies
+                  .map(
+                    (reply) =>
+                        CommentWidget(comment: reply, depth: widget.depth + 1),
+                  )
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+}
