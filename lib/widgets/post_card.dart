@@ -6,6 +6,7 @@ import '../utils/image_utils.dart';
 import '../utils/html_utils.dart';
 import '../utils/date_utils.dart';
 import 'full_screen_image_view.dart';
+import 'linkable_text.dart';
 
 /// A card widget that displays a summary of a [Post].
 ///
@@ -18,7 +19,14 @@ class PostCard extends StatefulWidget {
   /// Callback when the card is tapped.
   final VoidCallback? onTap;
 
-  const PostCard({super.key, required this.post, this.onTap});
+  final bool expanded;
+
+  const PostCard({
+    super.key,
+    required this.post,
+    this.onTap,
+    this.expanded = false,
+  });
 
   @override
   State<PostCard> createState() => _PostCardState();
@@ -68,10 +76,10 @@ class _PostCardState extends State<PostCard> {
               if (widget.post.content.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 4.0),
-                  child: Text(
-                    HtmlUtils.unescape(widget.post.content),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
+                  child: LinkableText(
+                    text: HtmlUtils.unescape(widget.post.content),
+                    maxLines: widget.expanded ? null : 3,
+                    overflow: widget.expanded ? null : TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),

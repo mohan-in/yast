@@ -39,6 +39,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
             SliverToBoxAdapter(
               child: PostCard(
                 post: widget.post,
+                expanded: true,
               ), // Reuse PostCard for the header
             ),
             SliverToBoxAdapter(

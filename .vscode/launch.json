@@ -5,18 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "demo",
+            "name": "yarc",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "demo (profile mode)",
+            "name": "yarc (profile mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "demo (release mode)",
+            "name": "yarc (release mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
