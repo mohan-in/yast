@@ -60,6 +60,10 @@ class _RedditHomePageState extends State<RedditHomePage> {
   Future<void> _fetchSubreddits() async {
     try {
       final subs = await _redditService.fetchSubscribedSubreddits();
+      subs.sort(
+        (a, b) =>
+            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
+      );
       if (mounted) {
         setState(() {
           _subscribedSubreddits = subs;

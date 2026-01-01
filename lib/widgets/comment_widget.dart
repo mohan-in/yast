@@ -25,13 +25,8 @@ class _CommentWidgetState extends State<CommentWidget> {
   @override
   Widget build(BuildContext context) {
     // Only indentation for depth > 0 to avoid wasted space
-    return Padding(
-      padding: EdgeInsets.only(
-        left: widget.depth == 0 ? 0.0 : 8.0,
-        top: 12.0,
-        bottom: 12.0,
-        right: 8.0,
-      ),
+    Widget content = Padding(
+      padding: EdgeInsets.only(left: widget.depth == 0 ? 0.0 : 2.0, top: 4.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -44,7 +39,7 @@ class _CommentWidgetState extends State<CommentWidget> {
                 ),
               ),
             ),
-            padding: const EdgeInsets.only(left: 8.0),
+            padding: const EdgeInsets.only(left: 4.0, right: 8.0, bottom: 4.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -101,5 +96,17 @@ class _CommentWidgetState extends State<CommentWidget> {
         ],
       ),
     );
+
+    if (widget.depth == 0) {
+      return Card(
+        // Add vertical spacing between thread cards
+        margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: content,
+      );
+    }
+
+    return content;
   }
 }

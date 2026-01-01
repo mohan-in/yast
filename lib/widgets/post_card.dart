@@ -71,7 +71,9 @@ class _PostCardState extends State<PostCard> {
               const SizedBox(height: 4),
               Text(
                 HtmlUtils.unescape(widget.post.title),
-                style: Theme.of(context).textTheme.titleMedium,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               if (widget.post.content.isNotEmpty)
                 Padding(
