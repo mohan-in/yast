@@ -20,6 +20,10 @@ class RedditHomePage extends StatefulWidget {
 }
 
 class _RedditHomePageState extends State<RedditHomePage> {
+  static const String _userAgent =
+      'flutter_reddit_demo/1.0.0 (by /u/antigravity)';
+  static const int _scrollThreshold = 200;
+
   late final RedditService _redditService;
   late final AuthService _authService;
 
@@ -29,7 +33,6 @@ class _RedditHomePageState extends State<RedditHomePage> {
   bool _isLoading = false;
   final ScrollController _scrollController = ScrollController();
 
-  // If null, we use Home Feed (authenticated).
   String? _currentSubreddit;
   bool _isLoggedIn = false;
 
@@ -43,16 +46,20 @@ class _RedditHomePageState extends State<RedditHomePage> {
     _checkLoginStatus();
   }
 
+  void _resetFeedState() {
+    _currentSubreddit = null;
+    _posts.clear();
+    _after = null;
+  }
+
   Future<void> _checkLoginStatus() async {
     final loggedIn = _authService.isLoggedIn;
     setState(() {
       _isLoggedIn = loggedIn;
-      _currentSubreddit = null;
-      _posts.clear();
-      _after = null;
+      _resetFeedState();
     });
     if (loggedIn) {
-      _loadPosts(); // Only load posts if logged in
+      _loadPosts();
       _fetchSubreddits();
     }
   }
@@ -79,9 +86,7 @@ class _RedditHomePageState extends State<RedditHomePage> {
     if (success) {
       setState(() {
         _isLoggedIn = true;
-        _currentSubreddit = null; // Switch to Home Feed
-        _posts.clear();
-        _after = null;
+        _resetFeedState();
       });
       _loadPosts();
       _fetchSubreddits();
@@ -92,12 +97,9 @@ class _RedditHomePageState extends State<RedditHomePage> {
     await _authService.logout();
     setState(() {
       _isLoggedIn = false;
-      _currentSubreddit = null;
-      _posts.clear();
-      _after = null;
+      _resetFeedState();
       _subscribedSubreddits.clear();
     });
-    // Do not load posts after logout, waiting for login
   }
 
   @override
@@ -108,19 +110,16 @@ class _RedditHomePageState extends State<RedditHomePage> {
 
   void _scrollListener() {
     if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+        _scrollController.position.maxScrollExtent - _scrollThreshold) {
       _loadPosts();
     }
   }
 
   Future<void> _loadPosts() async {
-    // Prevent loading if not logged in and no subreddit selected (Guest mode on home)
     if (!_isLoggedIn && _currentSubreddit == null) return;
-
     if (_isLoading) return;
-    setState(() {
-      _isLoading = true;
-    });
+
+    setState(() => _isLoading = true);
 
     try {
       final result = await _redditService.fetchPosts(
@@ -132,38 +131,7 @@ class _RedditHomePageState extends State<RedditHomePage> {
 
       if (!mounted) return;
 
-      // Precache images for new posts
-      final Map<String, String>? headers = kIsWeb
-          ? null
-          : {'User-Agent': 'flutter_reddit_demo/1.0.0 (by /u/antigravity)'};
-
-      for (var post in newPosts) {
-        try {
-          if (post.imageUrl != null) {
-            precacheImage(
-              NetworkImage(
-                ImageUtils.getCorsUrl(post.imageUrl!),
-                headers: headers,
-              ),
-              context,
-            ).catchError((e) {
-              debugPrint('Failed to precache image: $e');
-            });
-          } else if (post.thumbnail != null) {
-            precacheImage(
-              NetworkImage(
-                ImageUtils.getCorsUrl(post.thumbnail!),
-                headers: headers,
-              ),
-              context,
-            ).catchError((e) {
-              debugPrint('Failed to precache thumbnail: $e');
-            });
-          }
-        } catch (e) {
-          debugPrint('Failed to precache image: $e');
-        }
-      }
+      _precachePostImages(newPosts);
 
       setState(() {
         _posts.addAll(newPosts);
@@ -172,9 +140,21 @@ class _RedditHomePageState extends State<RedditHomePage> {
     } catch (e) {
       debugPrint('Error loading posts: $e');
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _precachePostImages(List<Post> posts) {
+    final headers = kIsWeb ? null : <String, String>{'User-Agent': _userAgent};
+
+    for (var post in posts) {
+      final imageUrl = post.imageUrl ?? post.thumbnail;
+      if (imageUrl != null) {
+        precacheImage(
+          NetworkImage(ImageUtils.getCorsUrl(imageUrl), headers: headers),
+          context,
+        ).catchError((e) => debugPrint('Failed to precache image: $e'));
       }
     }
   }

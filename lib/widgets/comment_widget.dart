@@ -24,7 +24,6 @@ class _CommentWidgetState extends State<CommentWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Only indentation for depth > 0 to avoid wasted space
     Widget content = Padding(
       padding: EdgeInsets.only(left: widget.depth == 0 ? 0.0 : 2.0, top: 4.0),
       child: Column(
@@ -61,7 +60,6 @@ class _CommentWidgetState extends State<CommentWidget> {
                           ],
                         ],
                       ),
-                      // Upvote count removed
                     ],
                   ),
                 ),
@@ -73,9 +71,7 @@ class _CommentWidgetState extends State<CommentWidget> {
                       .expand(
                         (p) => [
                           MarkdownContent(text: HtmlUtils.unescape(p.trim())),
-                          const SizedBox(
-                            height: 6,
-                          ), // Reduced paragraph spacing
+                          const SizedBox(height: 6),
                         ],
                       )
                       .toList()
@@ -99,7 +95,6 @@ class _CommentWidgetState extends State<CommentWidget> {
 
     if (widget.depth == 0) {
       return Card(
-        // Add vertical spacing between thread cards
         margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

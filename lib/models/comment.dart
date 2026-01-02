@@ -20,9 +20,6 @@ class Comment {
   factory Comment.fromDraw(draw.Comment comment) {
     List<Comment> replies = [];
     if (comment.replies != null) {
-      // draw.CommentForest or similar. .toList() gives comments.
-      // Filter out MoreComments objects if necessary, though draw might handle them or return them.
-      // We only want actual comments.
       for (final reply in comment.replies!.comments) {
         if (reply is draw.Comment) {
           replies.add(Comment.fromDraw(reply));

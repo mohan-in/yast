@@ -1,4 +1,5 @@
 import 'package:draw/draw.dart' as sys;
+import '../utils/html_utils.dart';
 
 /// A data model representing a Reddit post.
 class Post {
@@ -61,7 +62,7 @@ class Post {
     final preview = submission.preview;
     if (preview.isNotEmpty) {
       final image = preview[0].source;
-      imageUrl = image.url.toString().replaceAll('&amp;', '&');
+      imageUrl = HtmlUtils.unescape(image.url.toString());
     }
 
     // Check for direct URL if it's an image
@@ -75,9 +76,6 @@ class Post {
       }
     }
 
-    // Gallery handling might be more complex with draw, checking mostly for media_metadata
-    // draw might not expose raw json easily for everything, but we can try accessing data property if needed.
-    // submission.data matches the raw map.
     if (submission.data != null) {
       final data = submission.data!;
       if (data['gallery_data'] != null && data['media_metadata'] != null) {
@@ -90,9 +88,8 @@ class Post {
               final mediaItem = metadata[mediaId];
               if (mediaItem['status'] == 'valid' && mediaItem['e'] == 'Image') {
                 if (mediaItem['s'] != null && mediaItem['s']['u'] != null) {
-                  String url = (mediaItem['s']['u'] as String).replaceAll(
-                    '&amp;',
-                    '&',
+                  String url = HtmlUtils.unescape(
+                    mediaItem['s']['u'] as String,
                   );
                   images.add(url);
                 }

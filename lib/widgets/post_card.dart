@@ -286,7 +286,6 @@ class _PostCardState extends State<PostCard> {
                         ),
                 )
               else if (widget.post.thumbnail != null)
-                // Fallback for thumbnail if no main images
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
                   child: GestureDetector(

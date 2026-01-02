@@ -1,4 +1,5 @@
 import 'package:draw/draw.dart' as draw;
+import '../utils/html_utils.dart';
 
 class Subreddit {
   final String displayName;
@@ -14,20 +15,16 @@ class Subreddit {
   });
 
   factory Subreddit.fromDraw(draw.Subreddit sub) {
-    // draw Subreddit might not have explicit fields populated without fetching,
-    // but user.subreddits() returns populated ones usually.
-    // sub.data is the raw map.
-
     String? icon;
     final iconUri = sub.iconImage;
     if (iconUri != null) {
-      icon = iconUri.toString().replaceAll('&amp;', '&');
+      icon = HtmlUtils.unescape(iconUri.toString());
     }
 
     if ((icon == null || icon.isEmpty) && sub.data != null) {
       final commIcon = sub.data!['community_icon'];
       if (commIcon != null && commIcon is String && commIcon.isNotEmpty) {
-        icon = commIcon.replaceAll('&amp;', '&');
+        icon = HtmlUtils.unescape(commIcon);
       }
     }
 
