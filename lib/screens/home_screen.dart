@@ -1,104 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
-import '../services/reddit_service.dart';
-import '../services/auth_service.dart';
-import '../models/post.dart';
-import '../models/subreddit.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../providers/auth_state.dart';
+import '../providers/feed_state.dart';
+import '../providers/subreddits_state.dart';
 import '../widgets/post_card.dart';
 import '../widgets/app_drawer.dart';
 import '../utils/image_utils.dart';
 import 'post_detail_page.dart';
 
-class RedditHomePage extends StatefulWidget {
-  final RedditService? redditService;
-  final AuthService? authService;
-
-  const RedditHomePage({super.key, this.redditService, this.authService});
+class RedditHomePage extends ConsumerStatefulWidget {
+  const RedditHomePage({super.key});
 
   @override
-  State<RedditHomePage> createState() => _RedditHomePageState();
+  ConsumerState<RedditHomePage> createState() => _RedditHomePageState();
 }
 
-class _RedditHomePageState extends State<RedditHomePage> {
-  static const String _userAgent =
-      'flutter_reddit_demo/1.0.0 (by /u/antigravity)';
-  static const int _scrollThreshold = 200;
+class _RedditHomePageState extends ConsumerState<RedditHomePage> {
+  // Prefetch threshold: Start loading next page when 800px from bottom
+  // This is roughly 2-3 cards ahead, giving seamless infinite scroll
+  static const int _scrollThreshold = 800;
 
-  late final RedditService _redditService;
-  late final AuthService _authService;
-
-  final List<Post> _posts = [];
-  List<Subreddit> _subscribedSubreddits = [];
-  String? _after;
-  bool _isLoading = false;
   final ScrollController _scrollController = ScrollController();
-
-  String? _currentSubreddit;
-  bool _isLoggedIn = false;
 
   @override
   void initState() {
     super.initState();
-    _authService = widget.authService ?? AuthService();
-    _redditService =
-        widget.redditService ?? RedditService(authService: _authService);
     _scrollController.addListener(_scrollListener);
-    _checkLoginStatus();
-  }
-
-  void _resetFeedState() {
-    _currentSubreddit = null;
-    _posts.clear();
-    _after = null;
-  }
-
-  Future<void> _checkLoginStatus() async {
-    final loggedIn = _authService.isLoggedIn;
-    setState(() {
-      _isLoggedIn = loggedIn;
-      _resetFeedState();
-    });
-    if (loggedIn) {
-      _loadPosts();
-      _fetchSubreddits();
-    }
-  }
-
-  Future<void> _fetchSubreddits() async {
-    try {
-      final subs = await _redditService.fetchSubscribedSubreddits();
-      subs.sort(
-        (a, b) =>
-            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
-      );
-      if (mounted) {
-        setState(() {
-          _subscribedSubreddits = subs;
-        });
+    // Initialize auth on startup
+    Future.microtask(() async {
+      await ref.read(authProvider.notifier).init();
+      final authState = ref.read(authProvider);
+      if (authState.isLoggedIn) {
+        ref.read(feedProvider.notifier).loadPosts();
+        ref.read(subredditsProvider.notifier).fetchSubreddits();
       }
-    } catch (e) {
-      debugPrint('Failed to fetch subreddits: $e');
-    }
-  }
-
-  Future<void> _handleLogin() async {
-    final success = await _authService.authenticate();
-    if (success) {
-      setState(() {
-        _isLoggedIn = true;
-        _resetFeedState();
-      });
-      _loadPosts();
-      _fetchSubreddits();
-    }
-  }
-
-  Future<void> _handleLogout() async {
-    await _authService.logout();
-    setState(() {
-      _isLoggedIn = false;
-      _resetFeedState();
-      _subscribedSubreddits.clear();
     });
   }
 
@@ -108,95 +44,151 @@ class _RedditHomePageState extends State<RedditHomePage> {
     super.dispose();
   }
 
+  // Track last precache scroll position to throttle precaching
+  double _lastPrecachePosition = 0;
+  static const double _precacheScrollThreshold =
+      600; // Precache every 600px of scroll
+
   void _scrollListener() {
-    if (_scrollController.position.pixels >=
+    final currentPosition = _scrollController.position.pixels;
+
+    // Load more posts when near bottom
+    if (currentPosition >=
         _scrollController.position.maxScrollExtent - _scrollThreshold) {
-      _loadPosts();
+      ref.read(feedProvider.notifier).loadPosts();
+    }
+
+    // Precache images as user scrolls (throttled to every 600px)
+    if ((currentPosition - _lastPrecachePosition).abs() >=
+        _precacheScrollThreshold) {
+      _lastPrecachePosition = currentPosition;
+      _precachePostImages();
     }
   }
 
-  Future<void> _loadPosts() async {
-    if (!_isLoggedIn && _currentSubreddit == null) return;
-    if (_isLoading) return;
+  Future<void> _handleLogin() async {
+    final success = await ref.read(authProvider.notifier).login();
+    if (success) {
+      ref.read(feedProvider.notifier).loadPosts();
+      ref.read(subredditsProvider.notifier).fetchSubreddits();
+    }
+  }
 
-    setState(() => _isLoading = true);
+  Future<void> _handleLogout() async {
+    await ref.read(authProvider.notifier).logout();
+    ref.read(feedProvider.notifier).clear();
+    ref.read(subredditsProvider.notifier).clear();
+  }
 
-    try {
-      final result = await _redditService.fetchPosts(
-        subreddit: _currentSubreddit,
-        after: _after,
-      );
-      final newPosts = result.posts;
-      _after = result.nextAfter;
+  /// Precaches images for upcoming posts (not yet visible).
+  /// Uses CachedNetworkImage's cache manager for disk caching.
+  void _precachePostImages() {
+    final posts = ref.read(feedProvider).visiblePosts;
 
-      if (!mounted) return;
+    // Calculate roughly which posts are visible (estimate ~3 posts per screen)
+    final scrollPosition = _scrollController.hasClients
+        ? _scrollController.position.pixels
+        : 0.0;
+    final estimatedVisibleIndex = (scrollPosition / 300)
+        .floor(); // ~300px per card
 
-      _precachePostImages(newPosts);
+    // Prefetch next 5 posts beyond the visible area
+    final startIndex = (estimatedVisibleIndex + 3).clamp(0, posts.length);
+    final endIndex = (startIndex + 5).clamp(0, posts.length);
 
-      setState(() {
-        _posts.addAll(newPosts);
-        _isLoading = false;
-      });
-    } catch (e) {
-      debugPrint('Error loading posts: $e');
-      if (mounted) {
-        setState(() => _isLoading = false);
+    for (var i = startIndex; i < endIndex; i++) {
+      final post = posts[i];
+
+      // Collect all image URLs for this post (carousel or single image)
+      final imagesToCache = <String>[];
+
+      // Add carousel images
+      if (post.images.isNotEmpty) {
+        imagesToCache.addAll(post.images);
       }
-    }
-  }
+      // Add single image if exists and not already in carousel
+      else if (post.imageUrl != null) {
+        imagesToCache.add(post.imageUrl!);
+      }
+      // Add thumbnail as fallback
+      else if (post.thumbnail != null) {
+        imagesToCache.add(post.thumbnail!);
+      }
 
-  void _precachePostImages(List<Post> posts) {
-    final headers = kIsWeb ? null : <String, String>{'User-Agent': _userAgent};
-
-    for (var post in posts) {
-      final imageUrl = post.imageUrl ?? post.thumbnail;
-      if (imageUrl != null) {
+      // Precache all images for this post
+      for (final imageUrl in imagesToCache) {
         precacheImage(
-          NetworkImage(ImageUtils.getCorsUrl(imageUrl), headers: headers),
+          CachedNetworkImageProvider(
+            ImageUtils.getCorsUrl(imageUrl),
+            headers: ImageUtils.authHeaders,
+          ),
           context,
-        ).catchError((e) => debugPrint('Failed to precache image: $e'));
+        ).catchError((_) {});
       }
     }
-  }
-
-  void _refreshPosts() {
-    setState(() {
-      _posts.clear();
-      _after = null;
-    });
-    _loadPosts();
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    final feedState = ref.watch(feedProvider);
+    final subreddits = ref.watch(subredditsProvider);
+    final redditService = ref.read(redditServiceProvider);
+
+    // Precache when posts change or user scrolls
+    ref.listen(feedProvider, (previous, next) {
+      if (next.posts.length > (previous?.posts.length ?? 0)) {
+        _precachePostImages();
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _currentSubreddit != null
-              ? 'r/$_currentSubreddit'
-              : (_isLoggedIn ? 'Home Feed' : 'YARC'),
+          feedState.currentSubreddit != null
+              ? 'r/${feedState.currentSubreddit}'
+              : (authState.isLoggedIn ? 'Home Feed' : 'YARC'),
         ),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
-          if (_currentSubreddit != null)
+          if (feedState.currentSubreddit != null)
             IconButton(
               icon: const Icon(Icons.home),
               onPressed: () {
-                setState(() {
-                  _currentSubreddit = null;
-                  _posts.clear();
-                  _after = null;
-                });
-                _loadPosts();
+                ref.read(feedProvider.notifier).selectSubreddit(null);
               },
               tooltip: 'Go Home',
             ),
-          if (_isLoggedIn || _currentSubreddit != null)
+          if (authState.isLoggedIn || feedState.currentSubreddit != null) ...[
+            IconButton(
+              icon: Icon(
+                feedState.hideRead ? Icons.visibility_off : Icons.visibility,
+              ),
+              onPressed: () {
+                ref.read(feedProvider.notifier).toggleHideRead();
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                );
+              },
+              tooltip: feedState.hideRead
+                  ? 'Show All Posts'
+                  : 'Hide Read Posts',
+            ),
             IconButton(
               icon: const Icon(Icons.refresh),
-              onPressed: _refreshPosts,
+              onPressed: () {
+                ref.read(feedProvider.notifier).refresh();
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                );
+              },
             ),
-          if (!_isLoggedIn)
+          ],
+          if (!authState.isLoggedIn)
             TextButton.icon(
               icon: const Icon(Icons.login),
               label: const Text('Login'),
@@ -205,21 +197,18 @@ class _RedditHomePageState extends State<RedditHomePage> {
             ),
         ],
       ),
-      drawer: !_isLoggedIn
+      drawer: !authState.isLoggedIn
           ? null
           : AppDrawer(
-              subreddits: _subscribedSubreddits,
+              subreddits: subreddits,
               onSubredditSelected: (sub) {
-                setState(() {
-                  _currentSubreddit = sub.displayName;
-                  _posts.clear();
-                  _after = null;
-                });
-                _loadPosts();
+                ref
+                    .read(feedProvider.notifier)
+                    .selectSubreddit(sub.displayName);
               },
               onLogout: _handleLogout,
             ),
-      body: !_isLoggedIn && _currentSubreddit == null
+      body: !authState.isLoggedIn && feedState.currentSubreddit == null
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -245,30 +234,34 @@ class _RedditHomePageState extends State<RedditHomePage> {
                 ],
               ),
             )
-          : _posts.isEmpty && _isLoading
+          : feedState.visiblePosts.isEmpty && feedState.isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: () async => _refreshPosts(),
+              onRefresh: () async => ref.read(feedProvider.notifier).refresh(),
               child: ListView.builder(
                 controller: _scrollController,
-                itemCount: _posts.length + (_isLoading ? 1 : 0),
+                itemCount:
+                    feedState.visiblePosts.length +
+                    (feedState.isLoading ? 1 : 0),
                 itemBuilder: (context, index) {
-                  if (index == _posts.length) {
+                  if (index == feedState.visiblePosts.length) {
                     return const Padding(
                       padding: EdgeInsets.all(16.0),
                       child: Center(child: CircularProgressIndicator()),
                     );
                   }
-                  final post = _posts[index];
+                  final post = feedState.visiblePosts[index];
                   return PostCard(
+                    key: ValueKey(post.id),
                     post: post,
                     onTap: () {
+                      ref.read(feedProvider.notifier).markAsRead(post.id);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => PostDetailPage(
                             post: post,
-                            redditService: _redditService,
+                            redditService: redditService,
                           ),
                         ),
                       );

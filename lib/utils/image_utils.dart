@@ -39,4 +39,8 @@ class ImageUtils {
         path.endsWith('.gif') ||
         path.endsWith('.webp');
   }
+
+  static Map<String, String>? get authHeaders => kIsWeb
+      ? null
+      : const {'User-Agent': 'flutter_reddit_demo/1.0.0 (by /u/antigravity)'};
 }

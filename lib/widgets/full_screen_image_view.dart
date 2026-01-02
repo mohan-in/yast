@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../utils/image_utils.dart';
-import 'package:flutter/foundation.dart';
 
 /// A full-screen image viewer that supports zooming and panning.
 class FullScreenImageView extends StatefulWidget {
@@ -60,21 +60,13 @@ class _FullScreenImageViewState extends State<FullScreenImageView> {
             minScale: 0.5,
             maxScale: 4.0,
             child: Center(
-              child: Image.network(
-                ImageUtils.getCorsUrl(widget.imageUrls[index]),
-                headers: kIsWeb
-                    ? null
-                    : const {
-                        'User-Agent':
-                            'flutter_reddit_demo/1.0.0 (by /u/antigravity)',
-                      },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) => const Center(
+              child: CachedNetworkImage(
+                imageUrl: ImageUtils.getCorsUrl(widget.imageUrls[index]),
+                httpHeaders: ImageUtils.authHeaders,
+                placeholder: (context, url) => const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+                errorWidget: (context, url, error) => const Center(
                   child: Icon(Icons.error, color: Colors.white, size: 48),
                 ),
               ),

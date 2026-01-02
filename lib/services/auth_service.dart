@@ -43,8 +43,8 @@ class AuthService {
           userAgent: _userAgent,
           redirectUri: Uri.parse(_redirectUri),
         );
-      } catch (e) {
-        debugPrint('Failed to restore Reddit session: $e');
+      } catch (_) {
+        // Session restoration failed, logout
         await logout();
       }
     }
@@ -82,8 +82,8 @@ class AuthService {
         await _exchangeCodeForToken(code, redditConfig);
         return true;
       }
-    } catch (e) {
-      debugPrint('Authentication failed: $e');
+    } catch (_) {
+      // Authentication failed
     }
     return false;
   }
@@ -99,8 +99,8 @@ class AuthService {
         _credentialsKey,
         _reddit!.auth.credentials.toJson(),
       );
-    } catch (e) {
-      debugPrint('Token exchange error: $e');
+    } catch (_) {
+      // Token exchange failed
       rethrow;
     }
   }

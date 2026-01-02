@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:draw/draw.dart' as draw;
 import '../models/post.dart';
 import '../models/comment.dart';
@@ -42,8 +41,8 @@ class RedditService {
           nextAfterToken = content.fullname;
         }
       }
-    } catch (e) {
-      debugPrint('Stream error or end: $e');
+    } catch (_) {
+      // Stream ended or error, return what we have
     }
 
     return (posts: posts, nextAfter: nextAfterToken);
