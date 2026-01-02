@@ -82,9 +82,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       if (widget.autoPlay && _isVisible) {
         _chewieController?.play();
       }
-    } catch (_) {
-      // Video player initialization failed silently
-    }
+    } catch (_) {}
   }
 
   @override

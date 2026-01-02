@@ -41,9 +41,7 @@ class RedditService {
           nextAfterToken = content.fullname;
         }
       }
-    } catch (_) {
-      // Stream ended or error, return what we have
-    }
+    } catch (_) {}
 
     return (posts: posts, nextAfter: nextAfterToken);
   }

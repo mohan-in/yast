@@ -44,7 +44,6 @@ class AuthService {
           redirectUri: Uri.parse(_redirectUri),
         );
       } catch (_) {
-        // Session restoration failed, logout
         await logout();
       }
     }
@@ -82,9 +81,7 @@ class AuthService {
         await _exchangeCodeForToken(code, redditConfig);
         return true;
       }
-    } catch (_) {
-      // Authentication failed
-    }
+    } catch (_) {}
     return false;
   }
 
@@ -100,7 +97,6 @@ class AuthService {
         _reddit!.auth.credentials.toJson(),
       );
     } catch (_) {
-      // Token exchange failed
       rethrow;
     }
   }

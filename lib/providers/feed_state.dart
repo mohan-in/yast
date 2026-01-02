@@ -122,11 +122,7 @@ class FeedNotifier extends StateNotifier<FeedState> {
   Future<void> refresh() async {
     // Load cached posts for instant display while we fetch fresh data
     final cached = await _cacheService.getCachedPosts(state.currentSubreddit);
-    state = state.copyWith(
-      posts: cached.isNotEmpty ? cached : [],
-      after: null,
-      // Note: hideRead is preserved (not passed, so keeps current value)
-    );
+    state = state.copyWith(posts: cached.isNotEmpty ? cached : [], after: null);
     await loadPosts(refresh: true);
   }
 
