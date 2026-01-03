@@ -4,8 +4,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/auth_state.dart';
 import '../providers/feed_state.dart';
 import '../providers/subreddits_state.dart';
-import '../widgets/post_card.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/login_prompt.dart';
+import '../widgets/post_list.dart';
 import '../utils/image_utils.dart';
 import 'post_detail_screen.dart';
 
@@ -128,6 +129,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
+  void _scrollToTop() {
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
@@ -149,53 +158,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ? 'r/${feedState.currentSubreddit}'
               : (authState.isLoggedIn ? 'Home Feed' : 'YARC'),
         ),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
-          if (feedState.currentSubreddit != null)
-            IconButton(
-              icon: const Icon(Icons.home),
-              onPressed: () {
-                ref.read(feedProvider.notifier).selectSubreddit(null);
-              },
-              tooltip: 'Go Home',
-            ),
-          if (authState.isLoggedIn || feedState.currentSubreddit != null) ...[
-            IconButton(
-              icon: Icon(
-                feedState.hideRead ? Icons.visibility_off : Icons.visibility,
-              ),
-              onPressed: () {
-                ref.read(feedProvider.notifier).toggleHideRead();
-                _scrollController.animateTo(
-                  0,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOut,
-                );
-              },
-              tooltip: feedState.hideRead
-                  ? 'Show All Posts'
-                  : 'Hide Read Posts',
-            ),
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: () {
-                ref.read(feedProvider.notifier).refresh();
-                _scrollController.animateTo(
-                  0,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOut,
-                );
-              },
-            ),
-          ],
-          if (!authState.isLoggedIn)
-            TextButton.icon(
-              icon: const Icon(Icons.login),
-              label: const Text('Login'),
-              onPressed: _handleLogin,
-              style: TextButton.styleFrom(foregroundColor: Colors.black),
-            ),
-        ],
+        actions: _buildAppBarActions(authState, feedState),
       ),
       drawer: !authState.isLoggedIn
           ? null
@@ -208,68 +171,75 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               },
               onLogout: _handleLogout,
             ),
-      body: !authState.isLoggedIn && feedState.currentSubreddit == null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.reddit, size: 80, color: Colors.deepOrange),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Welcome to YARC',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: _handleLogin,
-                    icon: const Icon(Icons.login),
-                    label: const Text('Login with Reddit'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 16,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : feedState.visiblePosts.isEmpty && feedState.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: () async => ref.read(feedProvider.notifier).refresh(),
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount:
-                    feedState.visiblePosts.length +
-                    (feedState.isLoading ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == feedState.visiblePosts.length) {
-                    return const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  final post = feedState.visiblePosts[index];
-                  return PostCard(
-                    key: ValueKey(post.id),
-                    post: post,
-                    onTap: () {
-                      ref.read(feedProvider.notifier).markAsRead(post.id);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PostDetailScreen(
-                            post: post,
-                            redditService: redditService,
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
+      body: _buildBody(authState, feedState, redditService),
+    );
+  }
+
+  List<Widget> _buildAppBarActions(AuthState authState, FeedState feedState) {
+    return [
+      if (feedState.currentSubreddit != null)
+        IconButton(
+          icon: const Icon(Icons.home),
+          onPressed: () {
+            ref.read(feedProvider.notifier).selectSubreddit(null);
+          },
+          tooltip: 'Go Home',
+        ),
+      if (authState.isLoggedIn || feedState.currentSubreddit != null) ...[
+        IconButton(
+          icon: Icon(
+            feedState.hideRead ? Icons.visibility_off : Icons.visibility,
+          ),
+          onPressed: () {
+            ref.read(feedProvider.notifier).toggleHideRead();
+            _scrollToTop();
+          },
+          tooltip: feedState.hideRead ? 'Show All Posts' : 'Hide Read Posts',
+        ),
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: () {
+            ref.read(feedProvider.notifier).refresh();
+            _scrollToTop();
+          },
+        ),
+      ],
+      if (!authState.isLoggedIn)
+        TextButton.icon(
+          icon: const Icon(Icons.login),
+          label: const Text('Login'),
+          onPressed: _handleLogin,
+          style: TextButton.styleFrom(foregroundColor: Colors.black),
+        ),
+    ];
+  }
+
+  Widget _buildBody(
+    AuthState authState,
+    FeedState feedState,
+    dynamic redditService,
+  ) {
+    // Show login prompt if not logged in and no subreddit selected
+    if (!authState.isLoggedIn && feedState.currentSubreddit == null) {
+      return LoginPrompt(onLogin: _handleLogin);
+    }
+
+    // Show post list
+    return PostList(
+      posts: feedState.visiblePosts,
+      isLoading: feedState.isLoading,
+      scrollController: _scrollController,
+      onRefresh: () => ref.read(feedProvider.notifier).refresh(),
+      onPostTap: (post) {
+        ref.read(feedProvider.notifier).markAsRead(post.id);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                PostDetailScreen(post: post, redditService: redditService),
+          ),
+        );
+      },
     );
   }
 }

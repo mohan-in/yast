@@ -75,9 +75,8 @@ class _ImageCarouselState extends State<ImageCarousel> {
                 ),
                 child: Text(
                   '${_currentIndex + 1}/${widget.imageUrls.length}',
-                  style: const TextStyle(
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: Colors.white,
-                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
