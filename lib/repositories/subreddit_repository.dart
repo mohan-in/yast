@@ -1,5 +1,5 @@
-import '../../models/subreddit.dart';
-import '../../services/reddit_service.dart';
+import '../models/subreddit.dart';
+import '../services/reddit_service.dart';
 
 /// Repository for subreddit operations.
 class SubredditRepository {

@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../data/repositories/post_repository.dart';
+import '../repositories/post_repository.dart';
 import '../models/post.dart';
 
 /// Notifier for managing the post feed.

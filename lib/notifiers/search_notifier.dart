@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../data/repositories/subreddit_repository.dart';
+import '../repositories/subreddit_repository.dart';
 import '../models/subreddit.dart';
 
 /// Notifier for managing subreddit search state.

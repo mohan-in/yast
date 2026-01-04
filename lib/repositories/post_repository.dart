@@ -1,7 +1,7 @@
-import '../../models/post.dart';
-import '../../models/comment.dart';
-import '../../services/reddit_service.dart';
-import '../../services/cache_service.dart';
+import '../models/post.dart';
+import '../models/comment.dart';
+import '../services/reddit_service.dart';
+import '../services/cache_service.dart';
 
 /// Repository for post operations with caching support.
 class PostRepository {

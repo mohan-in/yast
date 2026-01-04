@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../data/repositories/auth_repository.dart';
+import '../repositories/auth_repository.dart';
 
 /// Notifier for managing authentication state.
 class AuthNotifier extends ChangeNotifier {
