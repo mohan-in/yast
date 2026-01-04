@@ -2,7 +2,7 @@ import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:draw/draw.dart';
 
-/// Service responsible for handling Reddit OAuth2 authentication using the `draw` package.
+/// Service responsible for Reddit OAuth2 authentication.
 class AuthService {
   static const String _clientId = String.fromEnvironment('REDDIT_CLIENT_ID');
   static const String _userAgent =
@@ -19,9 +19,14 @@ class AuthService {
   static const String _redirectUri = 'com.mohan.reddit.client://callback';
 
   Reddit? _reddit;
+
+  /// Returns the Reddit client instance.
   Reddit? get reddit => _reddit;
 
-  /// Initializes the service, restoring the session if available.
+  /// Checks if the user is currently logged in.
+  bool get isLoggedIn => _reddit != null && _reddit!.auth.isValid;
+
+  /// Initializes the data source, restoring the session if available.
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     final credentialsJson = prefs.getString(_credentialsKey);
@@ -69,7 +74,7 @@ class AuthService {
     return false;
   }
 
-  /// Exchanges the authorization code for an access token using draw.
+  /// Exchanges the authorization code for an access token.
   Future<void> _exchangeCodeForToken(String code, Reddit redditInstance) async {
     try {
       await redditInstance.auth.authorize(code);
@@ -91,7 +96,4 @@ class AuthService {
     await prefs.remove(_credentialsKey);
     _reddit = null;
   }
-
-  /// Checks if the user is currently logged in.
-  bool get isLoggedIn => _reddit != null && _reddit!.auth.isValid;
 }

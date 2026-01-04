@@ -2,17 +2,19 @@ import 'package:draw/draw.dart' as draw;
 import '../models/post.dart';
 import '../models/comment.dart';
 import '../models/subreddit.dart';
-import '../services/auth_service.dart';
+import 'auth_service.dart';
 
+/// Service for Reddit API calls.
 class RedditService {
   static const int _defaultLimit = 10;
 
-  final AuthService? authService;
+  final AuthService _authService;
 
-  RedditService({this.authService});
+  RedditService(this._authService);
 
-  draw.Reddit? get _reddit => authService?.reddit;
+  draw.Reddit? get _reddit => _authService.reddit;
 
+  /// Fetches posts from the home feed or a specific subreddit.
   Future<({List<Post> posts, String? nextAfter})> fetchPosts({
     String? subreddit,
     String? after,
@@ -46,6 +48,7 @@ class RedditService {
     return (posts: posts, nextAfter: nextAfterToken);
   }
 
+  /// Fetches comments for a post.
   Future<List<Comment>> fetchComments(String postId) async {
     final reddit = _reddit;
     if (reddit == null) {
@@ -68,6 +71,7 @@ class RedditService {
     }
   }
 
+  /// Fetches the user's subscribed subreddits.
   Future<List<Subreddit>> fetchSubscribedSubreddits() async {
     final reddit = _reddit;
     if (reddit == null) return [];
@@ -84,7 +88,6 @@ class RedditService {
   }
 
   /// Searches for subreddits by name prefix.
-  /// Returns a list of subreddits whose names start with the query.
   Future<List<Subreddit>> searchSubreddits(String query) async {
     final reddit = _reddit;
     if (reddit == null || query.isEmpty) return [];

@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart';
 import '../models/subreddit.dart';
-import '../providers/search_state.dart';
+import '../notifiers/search_notifier.dart';
 import '../utils/image_utils.dart';
 
 /// A SearchDelegate for searching subreddits.
 /// Returns the selected subreddit's display name when a result is tapped.
 class SubredditSearchDelegate extends SearchDelegate<String?> {
-  final WidgetRef ref;
-
-  SubredditSearchDelegate({required this.ref});
+  SubredditSearchDelegate();
 
   @override
   String get searchFieldLabel => 'Search subreddits';
@@ -22,7 +20,7 @@ class SubredditSearchDelegate extends SearchDelegate<String?> {
           icon: const Icon(Icons.clear),
           onPressed: () {
             query = '';
-            ref.read(searchProvider.notifier).clear();
+            context.read<SearchNotifier>().clear();
           },
         ),
     ];
@@ -33,7 +31,7 @@ class SubredditSearchDelegate extends SearchDelegate<String?> {
     return IconButton(
       icon: const Icon(Icons.arrow_back),
       onPressed: () {
-        ref.read(searchProvider.notifier).clear();
+        context.read<SearchNotifier>().clear();
         close(context, null);
       },
     );
@@ -48,35 +46,33 @@ class SubredditSearchDelegate extends SearchDelegate<String?> {
   Widget buildSuggestions(BuildContext context) {
     // Trigger search when user types
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(searchProvider.notifier).search(query);
+      context.read<SearchNotifier>().search(query);
     });
 
     return _buildSearchResults(context);
   }
 
   Widget _buildSearchResults(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, child) {
-        final searchState = ref.watch(searchProvider);
-
-        if (searchState.query.length < 2) {
+    return Consumer<SearchNotifier>(
+      builder: (context, searchNotifier, child) {
+        if (searchNotifier.query.length < 2) {
           return const Center(
             child: Text('Type at least 2 characters to search'),
           );
         }
 
-        if (searchState.isLoading) {
+        if (searchNotifier.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (searchState.results.isEmpty) {
+        if (searchNotifier.results.isEmpty) {
           return const Center(child: Text('No subreddits found'));
         }
 
         return ListView.builder(
-          itemCount: searchState.results.length,
+          itemCount: searchNotifier.results.length,
           itemBuilder: (context, index) {
-            final subreddit = searchState.results[index];
+            final subreddit = searchNotifier.results[index];
             return _buildSubredditTile(context, subreddit);
           },
         );
@@ -109,7 +105,7 @@ class SubredditSearchDelegate extends SearchDelegate<String?> {
             )
           : null,
       onTap: () {
-        ref.read(searchProvider.notifier).clear();
+        context.read<SearchNotifier>().clear();
         close(context, subreddit.displayName);
       },
     );
