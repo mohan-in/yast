@@ -142,6 +142,42 @@ class Post {
       images.add(imageUrl);
     }
 
+    // Extract image URLs from selftext content
+    // This handles posts where high-res images are embedded in the text
+    final String selftext = submission.selftext ?? '';
+    if (selftext.isNotEmpty) {
+      final imageUrlRegex = RegExp(
+        r'https?://[^\s\)]+\.(?:jpg|jpeg|png|gif|webp)(?:\?[^\s\)]*)?',
+        caseSensitive: false,
+      );
+      // Also match Reddit preview URLs that may not have file extensions
+      final redditPreviewRegex = RegExp(
+        r'https?://preview\.redd\.it/[^\s\)]+',
+        caseSensitive: false,
+      );
+
+      for (final match in imageUrlRegex.allMatches(selftext)) {
+        // HTML-unescape the URL so it matches the content after HtmlUtils.unescape()
+        final url = HtmlUtils.unescape(match.group(0)!);
+        if (!images.contains(url)) {
+          images.add(url);
+        }
+      }
+      for (final match in redditPreviewRegex.allMatches(selftext)) {
+        // HTML-unescape the URL so it matches the content after HtmlUtils.unescape()
+        final url = HtmlUtils.unescape(match.group(0)!);
+        if (!images.contains(url)) {
+          images.add(url);
+        }
+      }
+    }
+
+    // Only use thumbnail if no high-resolution images are available
+    final String? thumbnailUrl =
+        images.isEmpty && submission.thumbnail.toString().startsWith('http')
+        ? submission.thumbnail.toString()
+        : null;
+
     return Post(
       id: submission.id ?? '',
       title: submission.title,
@@ -149,9 +185,7 @@ class Post {
       subreddit: submission.subreddit.displayName,
       ups: submission.upvotes,
       numComments: submission.numComments,
-      thumbnail: submission.thumbnail.toString().startsWith('http')
-          ? submission.thumbnail.toString()
-          : null,
+      thumbnail: thumbnailUrl,
       imageUrl: imageUrl,
       permalink: submission.data!['permalink'] ?? '',
       content: submission.selftext ?? '',

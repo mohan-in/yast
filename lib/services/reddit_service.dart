@@ -43,6 +43,8 @@ class RedditService {
           nextAfterToken = content.fullname;
         }
       }
+      // Persist credentials after successful API call (token may have been refreshed)
+      await _authService.persistCredentials();
     } catch (_) {}
 
     return (posts: posts, nextAfter: nextAfterToken);
@@ -58,6 +60,9 @@ class RedditService {
     try {
       final ref = reddit.submission(id: postId);
       final submission = await ref.populate();
+
+      // Persist credentials after successful API call (token may have been refreshed)
+      await _authService.persistCredentials();
 
       if (submission.comments != null) {
         return submission.comments!.comments
@@ -81,6 +86,8 @@ class RedditService {
       await for (final sub in reddit.user.subreddits(limit: 100)) {
         subs.add(Subreddit.fromDraw(sub));
       }
+      // Persist credentials after successful API call (token may have been refreshed)
+      await _authService.persistCredentials();
       return subs;
     } catch (e) {
       return [];
@@ -107,6 +114,8 @@ class RedditService {
           // Skip subreddits that fail to load
         }
       }
+      // Persist credentials after successful API call (token may have been refreshed)
+      await _authService.persistCredentials();
       return subs;
     } catch (e) {
       return [];

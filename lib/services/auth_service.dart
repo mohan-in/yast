@@ -19,12 +19,31 @@ class AuthService {
   static const String _redirectUri = 'com.mohan.reddit.client://callback';
 
   Reddit? _reddit;
+  String? _lastSavedCredentials;
 
   /// Returns the Reddit client instance.
   Reddit? get reddit => _reddit;
 
   /// Checks if the user is currently logged in.
   bool get isLoggedIn => _reddit != null && _reddit!.auth.isValid;
+
+  /// Persists the current credentials to storage.
+  /// Should be called after API operations that may trigger a token refresh.
+  Future<void> persistCredentials() async {
+    if (_reddit == null || !_reddit!.auth.isValid) return;
+
+    try {
+      final currentCredentials = _reddit!.auth.credentials.toJson();
+      // Only save if credentials have changed to avoid unnecessary writes
+      if (currentCredentials != _lastSavedCredentials) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_credentialsKey, currentCredentials);
+        _lastSavedCredentials = currentCredentials;
+      }
+    } catch (_) {
+      // Silently fail - we don't want to crash the app if credential saving fails
+    }
+  }
 
   /// Initializes the data source, restoring the session if available.
   Future<void> init() async {
@@ -39,6 +58,7 @@ class AuthService {
           userAgent: _userAgent,
           redirectUri: Uri.parse(_redirectUri),
         );
+        _lastSavedCredentials = credentialsJson;
       } catch (_) {
         await logout();
       }
@@ -80,11 +100,10 @@ class AuthService {
       await redditInstance.auth.authorize(code);
       _reddit = redditInstance;
 
+      final credentialsJson = _reddit!.auth.credentials.toJson();
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        _credentialsKey,
-        _reddit!.auth.credentials.toJson(),
-      );
+      await prefs.setString(_credentialsKey, credentialsJson);
+      _lastSavedCredentials = credentialsJson;
     } catch (_) {
       rethrow;
     }
