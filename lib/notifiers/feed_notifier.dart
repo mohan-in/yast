@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../repositories/post_repository.dart';
 import '../models/post.dart';
+import '../models/subreddit.dart';
 
 /// Notifier for managing the post feed.
 class FeedNotifier extends ChangeNotifier {
@@ -10,6 +11,7 @@ class FeedNotifier extends ChangeNotifier {
   bool _isLoading = false;
   bool _isLoadingFromCache = false;
   String? _currentSubreddit;
+  Subreddit? _currentSubredditInfo;
   String? _after;
   bool _hideRead = false;
   Set<String> _readPostIds = {};
@@ -18,6 +20,7 @@ class FeedNotifier extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isLoadingFromCache => _isLoadingFromCache;
   String? get currentSubreddit => _currentSubreddit;
+  Subreddit? get currentSubredditInfo => _currentSubredditInfo;
   bool get hideRead => _hideRead;
   Set<String> get readPostIds => _readPostIds;
 
@@ -102,6 +105,18 @@ class FeedNotifier extends ChangeNotifier {
     _posts = [];
     _after = null;
     _currentSubreddit = subreddit;
+    _currentSubredditInfo = null;
+    _isLoading = false;
+    notifyListeners();
+    loadPosts();
+  }
+
+  /// Switches to a specific subreddit with full info.
+  void selectSubredditWithInfo(Subreddit subreddit) {
+    _posts = [];
+    _after = null;
+    _currentSubreddit = subreddit.displayName;
+    _currentSubredditInfo = subreddit;
     _isLoading = false;
     notifyListeners();
     loadPosts();
@@ -128,6 +143,7 @@ class FeedNotifier extends ChangeNotifier {
     _posts = [];
     _after = null;
     _currentSubreddit = null;
+    _currentSubredditInfo = null;
     _isLoading = false;
     _hideRead = false;
     _readPostIds = {};

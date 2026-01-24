@@ -5,8 +5,8 @@ import '../notifiers/search_notifier.dart';
 import '../utils/image_utils.dart';
 
 /// A SearchDelegate for searching subreddits.
-/// Returns the selected subreddit's display name when a result is tapped.
-class SubredditSearchDelegate extends SearchDelegate<String?> {
+/// Returns the selected subreddit when a result is tapped.
+class SubredditSearchDelegate extends SearchDelegate<Subreddit?> {
   SubredditSearchDelegate();
 
   @override
@@ -104,10 +104,28 @@ class SubredditSearchDelegate extends SearchDelegate<String?> {
               ),
             )
           : null,
+      trailing: subreddit.subscriberCount != null
+          ? Text(
+              _formatSubscriberCount(subreddit.subscriberCount!),
+              style: textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            )
+          : null,
       onTap: () {
         context.read<SearchNotifier>().clear();
-        close(context, subreddit.displayName);
+        close(context, subreddit);
       },
     );
+  }
+
+  /// Formats the subscriber count in a human-readable way (e.g., 1.2M, 45.3K)
+  String _formatSubscriberCount(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M members';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K members';
+    }
+    return '$count members';
   }
 }

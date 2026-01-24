@@ -5,6 +5,7 @@ import '../services/reddit_service.dart';
 import '../notifiers/auth_notifier.dart';
 import '../notifiers/feed_notifier.dart';
 import '../notifiers/subreddits_notifier.dart';
+import '../models/subreddit.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/login_prompt.dart';
 import '../widgets/post_list.dart';
@@ -234,13 +235,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openSearch() async {
-    final selectedSubreddit = await showSearch<String?>(
+    final selectedSubreddit = await showSearch<Subreddit?>(
       context: context,
       delegate: SubredditSearchDelegate(),
     );
 
     if (selectedSubreddit != null && mounted) {
-      context.read<FeedNotifier>().selectSubreddit(selectedSubreddit);
+      context.read<FeedNotifier>().selectSubredditWithInfo(selectedSubreddit);
     }
   }
 
@@ -254,11 +255,12 @@ class _HomeScreenState extends State<HomeScreen> {
       return LoginPrompt(onLogin: _handleLogin);
     }
 
-    // Show post list
+    // Show post list with optional subreddit info card
     return PostList(
       posts: feedNotifier.visiblePosts,
       isLoading: feedNotifier.isLoading,
       scrollController: _scrollController,
+      subredditInfo: feedNotifier.currentSubredditInfo,
       onRefresh: () => context.read<FeedNotifier>().refresh(),
       onPostTap: (post) {
         context.read<FeedNotifier>().markAsRead(post.id);

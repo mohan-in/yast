@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/comment.dart';
 import '../utils/html_utils.dart';
+import '../utils/date_utils.dart';
 import 'markdown_content.dart';
 
 class CommentTile extends StatefulWidget {
@@ -53,6 +54,18 @@ class _CommentTileState extends State<CommentTile> {
                             'u/${widget.comment.author}',
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            DateUtilsHelper.formatTimeAgo(
+                              widget.comment.createdUtc,
+                            ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
                           ),
                           if (_isCollapsed) ...[
                             const SizedBox(width: 8),
