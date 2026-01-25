@@ -25,7 +25,18 @@ class AuthService {
   Reddit? get reddit => _reddit;
 
   /// Checks if the user is currently logged in.
-  bool get isLoggedIn => _reddit != null && _reddit!.auth.isValid;
+  /// Returns true if we have valid credentials with a refresh token,
+  /// even if the access token has expired (it will be refreshed automatically).
+  bool get isLoggedIn {
+    if (_reddit == null) return false;
+    try {
+      final credentials = _reddit!.auth.credentials;
+      // A session is valid if we have a refresh token (for permanent sessions)
+      return credentials.refreshToken != null;
+    } catch (_) {
+      return false;
+    }
+  }
 
   /// Persists the current credentials to storage.
   /// Should be called after API operations that may trigger a token refresh.
@@ -46,6 +57,7 @@ class AuthService {
   }
 
   /// Initializes the data source, restoring the session if available.
+  /// If the access token has expired, it will be refreshed automatically.
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     final credentialsJson = prefs.getString(_credentialsKey);
@@ -59,6 +71,13 @@ class AuthService {
           redirectUri: Uri.parse(_redirectUri),
         );
         _lastSavedCredentials = credentialsJson;
+
+        // If the access token is expired but we have a refresh token,
+        // proactively refresh to ensure the session is ready
+        if (!_reddit!.auth.isValid && isLoggedIn) {
+          await _reddit!.auth.refresh();
+          await persistCredentials();
+        }
       } catch (_) {
         await logout();
       }
