@@ -18,7 +18,7 @@ class Comment {
   });
 
   factory Comment.fromDraw(draw.Comment comment) {
-    List<Comment> replies = [];
+    final List<Comment> replies = [];
     if (comment.replies != null) {
       for (final reply in comment.replies!.comments) {
         if (reply is draw.Comment) {

@@ -1,5 +1,6 @@
 import '../models/post.dart';
 import '../models/comment.dart';
+import '../models/types.dart';
 import '../services/reddit_service.dart';
 import '../services/cache_service.dart';
 
@@ -11,8 +12,9 @@ class PostRepository {
   PostRepository(this._redditService, this._cacheService);
 
   /// Fetches posts with optional caching.
-  /// Returns posts and the pagination cursor.
-  Future<({List<Post> posts, String? nextAfter})> getPosts({
+  ///
+  /// Returns a [PostsResult] containing posts and the pagination cursor.
+  Future<PostsResult> getPosts({
     String? subreddit,
     String? after,
     bool useCache = true,
@@ -31,18 +33,13 @@ class PostRepository {
   }
 
   /// Fetches fresh posts from API and caches them.
-  Future<({List<Post> posts, String? nextAfter})> refresh({
-    String? subreddit,
-  }) async {
+  Future<PostsResult> refresh({String? subreddit}) async {
     final result = await _redditService.fetchPosts(subreddit: subreddit);
     await _cacheService.cachePosts(subreddit, result.posts);
     return result;
   }
 
-  Future<({List<Post> posts, String? nextAfter})> _fetchFromApi(
-    String? subreddit,
-    String? after,
-  ) async {
+  Future<PostsResult> _fetchFromApi(String? subreddit, String? after) async {
     final result = await _redditService.fetchPosts(
       subreddit: subreddit,
       after: after,

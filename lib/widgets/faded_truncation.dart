@@ -16,11 +16,11 @@ class FadedTruncation extends StatelessWidget {
   Widget build(BuildContext context) {
     return ShaderMask(
       shaderCallback: (Rect bounds) {
-        return LinearGradient(
+        return const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [Colors.white, Colors.white, Colors.transparent],
-          stops: const [0.0, 0.8, 1.0],
+          stops: [0.0, 0.8, 1.0],
         ).createShader(bounds);
       },
       blendMode: BlendMode.dstIn,

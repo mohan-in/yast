@@ -34,8 +34,6 @@ class MarkdownContent extends StatelessWidget {
     // 2. Configure the Markdown renderer
     final markdownBody = MarkdownBody(
       data: processedText,
-      selectable:
-          false, // Keeping false for now to avoid Impeller glyph bounds bug
       extensionSet: md.ExtensionSet.gitHubFlavored, // Better link/table parsing
       styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
         p: style ?? theme.textTheme.bodyMedium,
@@ -77,10 +75,7 @@ class MarkdownContent extends StatelessWidget {
 
     // 4. If maxLines is set (e.g. in Feed), wrap in truncation widget
     if (maxLines != null) {
-      return FadedTruncation(
-        maxHeight: 120.0, // Fixed height for consistency in feed
-        child: markdownBody,
-      );
+      return FadedTruncation(child: markdownBody);
     }
 
     return markdownBody;

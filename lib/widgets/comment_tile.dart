@@ -25,7 +25,7 @@ class _CommentTileState extends State<CommentTile> {
 
   @override
   Widget build(BuildContext context) {
-    Widget content = Padding(
+    final Widget content = Padding(
       padding: EdgeInsets.only(left: widget.depth == 0 ? 0.0 : 2.0, top: 4.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,13 +1,14 @@
 import 'package:draw/draw.dart' as draw;
+import 'package:flutter/foundation.dart';
 import '../models/post.dart';
 import '../models/comment.dart';
 import '../models/subreddit.dart';
+import '../models/types.dart';
+import '../utils/constants.dart';
 import 'auth_service.dart';
 
 /// Service for Reddit API calls.
 class RedditService {
-  static const int _defaultLimit = 10;
-
   final AuthService _authService;
 
   RedditService(this._authService);
@@ -15,23 +16,24 @@ class RedditService {
   draw.Reddit? get _reddit => _authService.reddit;
 
   /// Fetches posts from the home feed or a specific subreddit.
-  Future<({List<Post> posts, String? nextAfter})> fetchPosts({
-    String? subreddit,
-    String? after,
-  }) async {
+  ///
+  /// Returns a [PostsResult] containing the list of posts and pagination cursor.
+  Future<PostsResult> fetchPosts({String? subreddit, String? after}) async {
     final reddit = _reddit;
     if (reddit == null) {
       throw Exception('Reddit client not initialized or logged out');
     }
 
-    final Map<String, String> params = {'limit': '$_defaultLimit'};
+    final Map<String, String> params = {'limit': '$kDefaultPostLimit'};
     if (after != null) {
       params['after'] = after;
     }
 
     final stream = subreddit != null
-        ? reddit.subreddit(subreddit).hot(limit: _defaultLimit, params: params)
-        : reddit.front.best(limit: _defaultLimit, params: params);
+        ? reddit
+              .subreddit(subreddit)
+              .hot(limit: kDefaultPostLimit, params: params)
+        : reddit.front.best(limit: kDefaultPostLimit, params: params);
 
     final List<Post> posts = [];
     String? nextAfterToken;
@@ -45,7 +47,9 @@ class RedditService {
       }
       // Persist credentials after successful API call (token may have been refreshed)
       await _authService.persistCredentials();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Failed to fetch posts: $e');
+    }
 
     return (posts: posts, nextAfter: nextAfterToken);
   }
@@ -82,14 +86,15 @@ class RedditService {
     if (reddit == null) return [];
 
     try {
-      List<Subreddit> subs = [];
-      await for (final sub in reddit.user.subreddits(limit: 100)) {
+      final List<Subreddit> subs = [];
+      await for (final sub in reddit.user.subreddits()) {
         subs.add(Subreddit.fromDraw(sub));
       }
       // Persist credentials after successful API call (token may have been refreshed)
       await _authService.persistCredentials();
       return subs;
     } catch (e) {
+      debugPrint('Failed to fetch subscribed subreddits: $e');
       return [];
     }
   }
@@ -118,6 +123,7 @@ class RedditService {
       await _authService.persistCredentials();
       return subs;
     } catch (e) {
+      debugPrint('Failed to search subreddits: $e');
       return [];
     }
   }

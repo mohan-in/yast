@@ -10,6 +10,7 @@ import '../widgets/app_drawer.dart';
 import '../widgets/login_prompt.dart';
 import '../widgets/post_list.dart';
 import '../widgets/subreddit_search_delegate.dart';
+import '../utils/constants.dart';
 import '../utils/image_utils.dart';
 import 'post_detail_screen.dart';
 
@@ -21,16 +22,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Prefetch threshold: Start loading next page when 800px from bottom
-  // This is roughly 2-3 cards ahead, giving seamless infinite scroll
-  static const int _scrollThreshold = 800;
-
   final ScrollController _scrollController = ScrollController();
 
   // Track last precache scroll position to throttle precaching
   double _lastPrecachePosition = 0;
-  static const double _precacheScrollThreshold =
-      600; // Precache every 600px of scroll
 
   @override
   void initState() {
@@ -64,13 +59,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Load more posts when near bottom
     if (currentPosition >=
-        _scrollController.position.maxScrollExtent - _scrollThreshold) {
+        _scrollController.position.maxScrollExtent - kPaginationThreshold) {
       context.read<FeedNotifier>().loadPosts();
     }
 
-    // Precache images as user scrolls (throttled to every 600px)
+    // Precache images as user scrolls (throttled)
     if ((currentPosition - _lastPrecachePosition).abs() >=
-        _precacheScrollThreshold) {
+        kPrecacheScrollThreshold) {
       _lastPrecachePosition = currentPosition;
       _precachePostImages();
     }
@@ -98,16 +93,17 @@ class _HomeScreenState extends State<HomeScreen> {
     final feedNotifier = context.read<FeedNotifier>();
     final posts = feedNotifier.visiblePosts;
 
-    // Calculate roughly which posts are visible (estimate ~3 posts per screen)
+    // Calculate roughly which posts are visible
     final scrollPosition = _scrollController.hasClients
         ? _scrollController.position.pixels
         : 0.0;
-    final estimatedVisibleIndex = (scrollPosition / 300)
-        .floor(); // ~300px per card
+    final estimatedVisibleIndex = (scrollPosition / kEstimatedPostCardHeight)
+        .floor();
 
-    // Prefetch next 5 posts beyond the visible area
-    final startIndex = (estimatedVisibleIndex + 3).clamp(0, posts.length);
-    final endIndex = (startIndex + 5).clamp(0, posts.length);
+    // Prefetch posts beyond the visible area
+    final startIndex = (estimatedVisibleIndex + kVisiblePostsBeforePrefetch)
+        .clamp(0, posts.length);
+    final endIndex = (startIndex + kPrefetchPostCount).clamp(0, posts.length);
 
     for (var i = startIndex; i < endIndex; i++) {
       final post = posts[i];

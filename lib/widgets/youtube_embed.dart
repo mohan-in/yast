@@ -18,18 +18,8 @@ class _YouTubeEmbedState extends State<YouTubeEmbed> {
   @override
   void initState() {
     super.initState();
-    _controller = YoutubePlayerController(
-      initialVideoId: widget.videoId,
-      flags: const YoutubePlayerFlags(
-        mute: false,
-        autoPlay: false,
-        disableDragSeek: false,
-        loop: false,
-        isLive: false,
-        forceHD: false,
-        enableCaption: true,
-      ),
-    )..addListener(_listener);
+    _controller = YoutubePlayerController(initialVideoId: widget.videoId)
+      ..addListener(_listener);
   }
 
   void _listener() {

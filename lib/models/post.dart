@@ -72,7 +72,7 @@ class Post {
 
   factory Post.fromSubmission(sys.Submission submission) {
     String? imageUrl;
-    List<String> images = [];
+    final List<String> images = [];
     bool isVideo = submission.isVideo;
     String? videoUrl;
     bool isYoutube = false;
@@ -212,7 +212,7 @@ class Post {
             final mediaItem = metadata[mediaId];
             if (mediaItem['status'] == 'valid' && mediaItem['e'] == 'Image') {
               if (mediaItem['s'] != null && mediaItem['s']['u'] != null) {
-                String url = HtmlUtils.unescape(mediaItem['s']['u'] as String);
+                final url = HtmlUtils.unescape(mediaItem['s']['u'] as String);
                 images.add(url);
               }
             }

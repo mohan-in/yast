@@ -1,12 +1,27 @@
 import 'package:draw/draw.dart' as draw;
 import '../utils/html_utils.dart';
 
+/// Represents a Reddit subreddit with its metadata.
+///
+/// Contains display information like name, title, icon, and subscriber count.
+/// Used for displaying subreddit lists and info cards.
 class Subreddit {
+  /// The display name of the subreddit (e.g., "flutter").
   final String displayName;
+
+  /// The full title of the subreddit.
   final String title;
+
+  /// URL to the subreddit's icon image, if available.
   final String? iconImg;
+
+  /// The URL path to the subreddit (e.g., "/r/flutter").
   final String url;
+
+  /// Number of subscribers, if available.
   final int? subscriberCount;
+
+  /// Public description of the subreddit, if available.
   final String? description;
 
   Subreddit({
@@ -18,6 +33,10 @@ class Subreddit {
     this.description,
   });
 
+  /// Creates a [Subreddit] from a DRAW library subreddit object.
+  ///
+  /// Extracts icon from either `iconImage` or `community_icon` fields,
+  /// and parses subscriber count and description from raw data.
   factory Subreddit.fromDraw(draw.Subreddit sub) {
     String? icon;
     final iconUri = sub.iconImage;
