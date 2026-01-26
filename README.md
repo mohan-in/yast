@@ -11,6 +11,16 @@ A clean and modern Reddit client built with Flutter, designed to provide a seaml
 - **Authentication**: Secure login to access your personal front page and subscriptions.
 - **Modern UI**: Polished interface following Material Design guidelines properly adapted for mobile.
 
+## Technology Stack
+- **Framework**: Flutter & Dart
+- **State Management**: Provider
+- **Reddit API**: DRAW (Reddit API Wrapper)
+- **Local Storage**: Hive & SharedPreferences
+- **Authentication**: Flutter Web Auth 2
+- **Media**: Chewie (Video), YouTube Player Flutter
+- **Rendering**: Flutter Markdown Plus, Cached Network Image
+- **Utils**: Intl, HTML Unescape
+
 ## Getting Started
 
 To run this app, you need a Reddit API Client ID.
@@ -27,3 +37,7 @@ flutter run --dart-define=REDDIT_CLIENT_ID=YOUR_CLIENT_ID
 ```
 
 Replace `YOUR_CLIENT_ID` with the actual ID you obtained from Reddit.
+
+## Documentation
+
+For detailed architecture and project structure, see [ARCHITECTURE.md](ARCHITECTURE.md).
