@@ -1,7 +1,29 @@
 # YARC - Yet Another Reddit Client
 
-To run this app, you need to have a Reddit API client ID. You can get these by creating a new app on the [Reddit API website](https://www.reddit.com/prefs/apps/).
+A clean and modern Reddit client built with Flutter, designed to provide a seamless browsing experience.
 
-Once you have your client ID, you can run the app by setting the following environment variables:
+## Features
+- **Feed Browsing**: Seamlessly browse your favorite subreddits and custom feeds.
+- **Rich Media Support**: Native support for high-quality images, galleries, videos, and YouTube embeds.
+- **Markdown Rendering**: Beautiful rendering of text posts and nested comments with proper formatting.
+- **Search**: Easily discover new communities with subreddit search.
+- **Subreddit Info**: View details, subscriber counts, and descriptions for subreddits.
+- **Authentication**: Secure login to access your personal front page and subscriptions.
+- **Modern UI**: Polished interface following Material Design guidelines properly adapted for mobile.
 
+## Getting Started
+
+To run this app, you need a Reddit API Client ID.
+
+1.  Create a new app on the [Reddit API website](https://www.reddit.com/prefs/apps/).
+2.  Select **"installed app"**.
+3.  Set the redirect URI to `com.mohan.reddit.client://callback`.
+4.  Copy your **Client ID**.
+
+Run the app using the following command:
+
+```bash
 flutter run --dart-define=REDDIT_CLIENT_ID=YOUR_CLIENT_ID
+```
+
+Replace `YOUR_CLIENT_ID` with the actual ID you obtained from Reddit.
