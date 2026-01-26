@@ -75,11 +75,25 @@ class AuthService {
         // If the access token is expired but we have a refresh token,
         // proactively refresh to ensure the session is ready
         if (!_reddit!.auth.isValid && isLoggedIn) {
-          await _reddit!.auth.refresh();
-          await persistCredentials();
+          await refreshSession();
         }
       } catch (_) {
         await logout();
+      }
+    }
+  }
+
+  /// Forces a session refresh.
+  /// Useful when receiving 401 errors despite the client thinking the token is valid.
+  Future<void> refreshSession() async {
+    if (_reddit != null && isLoggedIn) {
+      try {
+        await _reddit!.auth.refresh();
+        await persistCredentials();
+      } catch (_) {
+        // If refresh fails, we might want to let the caller handle it
+        // or just silently fail. Retrowing allows the caller to know request failed.
+        rethrow;
       }
     }
   }

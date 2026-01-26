@@ -48,6 +48,21 @@ class RedditService {
       // Persist credentials after successful API call (token may have been refreshed)
       await _authService.persistCredentials();
     } catch (e) {
+      if (e.toString().contains('401')) {
+        try {
+          debugPrint('401 Unauthorized, refreshing session...');
+          await _authService.refreshSession();
+          // Retry the request recursively
+          // Note: To avoid infinite loops in a real specific retry function we'd add a count,
+          // but for this simple recursive retry on a specific error, it's acceptable if limited.
+          // However, here we are inside fetchPosts which returns Future<PostsResult>.
+          // We can just call fetchPosts again.
+          return fetchPosts(subreddit: subreddit, after: after);
+        } catch (refreshError) {
+          debugPrint('Failed to refresh session or retry: $refreshError');
+          // Retrying failed, so we fall through to return empty or rethrow
+        }
+      }
       debugPrint('Failed to fetch posts: $e');
     }
 
@@ -76,6 +91,17 @@ class RedditService {
       }
       return [];
     } catch (e) {
+      if (e.toString().contains('401')) {
+        try {
+          debugPrint(
+            '401 Unauthorized in fetchComments, refreshing session...',
+          );
+          await _authService.refreshSession();
+          return fetchComments(postId);
+        } catch (_) {
+          // Fall through to rethrow original or new error
+        }
+      }
       throw Exception('Failed to load comments: $e');
     }
   }
@@ -94,6 +120,15 @@ class RedditService {
       await _authService.persistCredentials();
       return subs;
     } catch (e) {
+      if (e.toString().contains('401')) {
+        try {
+          debugPrint(
+            '401 Unauthorized in fetchSubscribedSubreddits, refreshing session...',
+          );
+          await _authService.refreshSession();
+          return fetchSubscribedSubreddits();
+        } catch (_) {}
+      }
       debugPrint('Failed to fetch subscribed subreddits: $e');
       return [];
     }
@@ -123,6 +158,15 @@ class RedditService {
       await _authService.persistCredentials();
       return subs;
     } catch (e) {
+      if (e.toString().contains('401')) {
+        try {
+          debugPrint(
+            '401 Unauthorized in searchSubreddits, refreshing session...',
+          );
+          await _authService.refreshSession();
+          return searchSubreddits(query);
+        } catch (_) {}
+      }
       debugPrint('Failed to search subreddits: $e');
       return [];
     }
