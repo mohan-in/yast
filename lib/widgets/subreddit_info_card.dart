@@ -82,12 +82,7 @@ class SubredditInfoCard extends StatelessWidget {
             if (subreddit.description != null &&
                 subreddit.description!.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text(
-                subreddit.description!,
-                style: theme.textTheme.bodyMedium,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
+              Text(subreddit.description!, style: theme.textTheme.bodyMedium),
             ],
           ],
         ),

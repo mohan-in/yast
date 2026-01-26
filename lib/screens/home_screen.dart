@@ -178,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
             : AppDrawer(
                 subreddits: subredditsNotifier.subreddits,
                 onSubredditSelected: (sub) {
-                  context.read<FeedNotifier>().selectSubreddit(sub.displayName);
+                  context.read<FeedNotifier>().selectSubredditWithInfo(sub);
                 },
                 onLogout: _handleLogout,
               ),
