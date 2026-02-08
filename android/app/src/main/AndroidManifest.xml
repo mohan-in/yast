@@ -26,6 +26,16 @@
             </intent-filter>
             <!-- Deep linking -->
             <!-- Intent filter removed from MainActivity to prevent conflict with flutter_web_auth_2 -->
+            <!-- Deep linking for Reddit URLs -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="reddit.com" />
+                <data android:scheme="https" android:host="www.reddit.com" />
+                <data android:scheme="http" android:host="reddit.com" />
+                <data android:scheme="http" android:host="www.reddit.com" />
+            </intent-filter>
         </activity>
         
         <!-- Register the plugin's CallbackActivity explicitly to ensure it catches the deep link -->

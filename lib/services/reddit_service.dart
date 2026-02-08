@@ -106,6 +106,34 @@ class RedditService {
     }
   }
 
+  /// Fetches a single post by ID.
+  Future<Post?> fetchPost(String postId) async {
+    final reddit = _reddit;
+    if (reddit == null) {
+      return null;
+    }
+
+    try {
+      final ref = reddit.submission(id: postId);
+      final submission = await ref.populate();
+
+      // Persist credentials after successful API call (token may have been refreshed)
+      await _authService.persistCredentials();
+
+      return Post.fromSubmission(submission);
+    } catch (e) {
+      if (e.toString().contains('401')) {
+        try {
+          debugPrint('401 Unauthorized in fetchPost, refreshing session...');
+          await _authService.refreshSession();
+          return fetchPost(postId);
+        } catch (_) {}
+      }
+      debugPrint('Failed to fetch post $postId: $e');
+      return null;
+    }
+  }
+
   /// Fetches the user's subscribed subreddits.
   Future<List<Subreddit>> fetchSubscribedSubreddits() async {
     final reddit = _reddit;
