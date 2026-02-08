@@ -23,7 +23,6 @@ class DeepLinkService {
   final AppLinks _appLinks = AppLinks();
   StreamSubscription<Uri>? _linkSubscription;
 
-  /// Get the initial link that opened the app (cold start)
   Future<DeepLinkResult?> getInitialLink() async {
     final uri = await _appLinks.getInitialLink();
     if (uri != null) {
@@ -32,7 +31,6 @@ class DeepLinkService {
     return null;
   }
 
-  /// Listen for incoming links while app is running (warm start)
   Stream<DeepLinkResult> get linkStream {
     return _appLinks.uriLinkStream.map((uri) => parseRedditUrl(uri));
   }
@@ -41,17 +39,14 @@ class DeepLinkService {
   DeepLinkResult parseRedditUrl(Uri uri) {
     final pathSegments = uri.pathSegments;
 
-    // Handle empty path -> home
     if (pathSegments.isEmpty) {
       return const DeepLinkResult(type: DeepLinkType.home);
     }
 
-    // /r/{subreddit} or /r/{subreddit}/comments/{id}/...
     if (pathSegments.isNotEmpty && pathSegments[0] == 'r') {
       if (pathSegments.length >= 2) {
         final subreddit = pathSegments[1];
 
-        // Check if this is a post link: /r/{sub}/comments/{id}/...
         if (pathSegments.length >= 4 && pathSegments[2] == 'comments') {
           final postId = pathSegments[3];
           return DeepLinkResult(
@@ -61,7 +56,6 @@ class DeepLinkService {
           );
         }
 
-        // Just subreddit link
         return DeepLinkResult(
           type: DeepLinkType.subreddit,
           subreddit: subreddit,
@@ -69,7 +63,6 @@ class DeepLinkService {
       }
     }
 
-    // /u/{username} or /user/{username}
     if (pathSegments.isNotEmpty &&
         (pathSegments[0] == 'u' || pathSegments[0] == 'user')) {
       if (pathSegments.length >= 2) {
@@ -80,7 +73,6 @@ class DeepLinkService {
       }
     }
 
-    // /comments/{id}/... (direct post link without subreddit)
     if (pathSegments.isNotEmpty && pathSegments[0] == 'comments') {
       if (pathSegments.length >= 2) {
         return DeepLinkResult(type: DeepLinkType.post, postId: pathSegments[1]);

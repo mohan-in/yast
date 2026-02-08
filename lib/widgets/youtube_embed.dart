@@ -23,14 +23,11 @@ class _YouTubeEmbedState extends State<YouTubeEmbed> {
   }
 
   void _listener() {
-    if (_isPlayerReady && mounted && !_controller.value.isFullScreen) {
-      // Logic for state changes if needed
-    }
+    if (_isPlayerReady && mounted && !_controller.value.isFullScreen) {}
   }
 
   @override
   void deactivate() {
-    // Pauses video while navigating to next page.
     _controller.pause();
     super.deactivate();
   }

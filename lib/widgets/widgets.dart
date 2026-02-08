@@ -1,6 +1,3 @@
-// Barrel exports for all widget files.
-// Usage: import 'package:yarc/widgets/widgets.dart';
-
 export 'app_drawer.dart';
 export 'comment_tile.dart';
 export 'faded_truncation.dart';

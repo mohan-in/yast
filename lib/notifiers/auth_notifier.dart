@@ -11,7 +11,6 @@ class AuthNotifier extends ChangeNotifier {
   bool get isLoggedIn => _isLoggedIn;
   bool get isInitialized => _isInitialized;
 
-  /// Sets the repository. Called by ProxyProvider.
   void setRepository(AuthRepository repository) {
     _repository = repository;
   }

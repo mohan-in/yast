@@ -36,7 +36,6 @@ class AppDrawer extends StatelessWidget {
       destinationCount++;
     }
 
-    // 1. Header "YARC" (Not a destination)
     addWidget(
       Padding(
         padding: const EdgeInsets.fromLTRB(28, 16, 16, 10),
@@ -44,7 +43,6 @@ class AppDrawer extends StatelessWidget {
       ),
     );
 
-    // 2. Home Destination (Destination Index 0)
     addDestination(
       const NavigationDrawerDestination(
         icon: Icon(Icons.home_outlined),
@@ -57,7 +55,6 @@ class AppDrawer extends StatelessWidget {
       },
     );
 
-    // 3. Divider
     addWidget(
       const Padding(
         padding: EdgeInsets.fromLTRB(28, 16, 28, 10),
@@ -65,7 +62,6 @@ class AppDrawer extends StatelessWidget {
       ),
     );
 
-    // 4. Header "Subscriptions"
     addWidget(
       Padding(
         padding: const EdgeInsets.fromLTRB(28, 10, 16, 10),
@@ -76,7 +72,6 @@ class AppDrawer extends StatelessWidget {
       ),
     );
 
-    // 5. Subreddits (Destination Indices 1 to N)
     for (final sub in subreddits) {
       addDestination(
         NavigationDrawerDestination(
@@ -97,7 +92,6 @@ class AppDrawer extends StatelessWidget {
       );
     }
 
-    // 6. Divider
     addWidget(
       const Padding(
         padding: EdgeInsets.fromLTRB(28, 16, 28, 10),
@@ -105,12 +99,9 @@ class AppDrawer extends StatelessWidget {
       ),
     );
 
-    // 7. Logout (Standard ListTile, NOT a NavigationDrawerDestination)
     // IMPORTANT: Standard ListTiles in the children list of NavigationDrawer
-    // generally do NOT count as destinations for selectedIndex logic,
-    // but they handle their own taps.
-    // However, if we wanted it to be selectable, we might use NavigationDrawerDestination.
-    // Here we treat it as a distinct action (Footer).
+    // generally do NOT count as destinations for selectedIndex logic.
+    // We treat Logout as a distinct action (Footer).
     addWidget(
       ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 28),
@@ -123,7 +114,6 @@ class AppDrawer extends StatelessWidget {
       ),
     );
 
-    // Calculate selected index (Destination Index)
     int selectedIndex = 0; // Default to Home (Destination 0)
 
     if (currentSubreddit != null) {

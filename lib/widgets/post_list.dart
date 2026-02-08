@@ -29,22 +29,18 @@ class SliverPostList extends StatelessWidget {
       );
     }
 
-    // Calculate item count: subreddit header (if any) + posts + loading indicator
     final hasHeader = subredditInfo != null;
     final headerCount = hasHeader ? 1 : 0;
     final itemCount = headerCount + posts.length + (isLoading ? 1 : 0);
 
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
-        // Subreddit info card at the top
         if (hasHeader && index == 0) {
           return SubredditInfoCard(subreddit: subredditInfo!);
         }
 
-        // Adjust index for header offset
         final postIndex = index - headerCount;
 
-        // Loading indicator at the bottom
         if (postIndex == posts.length) {
           return const Padding(
             padding: EdgeInsets.all(16.0),

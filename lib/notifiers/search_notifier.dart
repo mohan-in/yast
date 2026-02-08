@@ -37,7 +37,6 @@ class SearchNotifier extends ChangeNotifier {
 
     try {
       final results = await _repository!.search(query);
-      // Only update if query hasn't changed during fetch
       if (_query == query) {
         _results = results;
         _isLoading = false;

@@ -35,10 +35,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         slivers: [
           SliverAppBar(pinned: true, title: Text('r/${widget.post.subreddit}')),
           SliverToBoxAdapter(
-            child: PostCard(
-              post: widget.post,
-              expanded: true,
-            ), // Reuse PostCard for the header
+            child: PostCard(post: widget.post, expanded: true),
           ),
           SliverToBoxAdapter(
             child: Padding(

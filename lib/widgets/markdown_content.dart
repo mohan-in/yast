@@ -27,11 +27,9 @@ class MarkdownContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Convert bare URLs to markdown image syntax so they render as images
     final processedText = ImageUtils.convertBareUrlsToMarkdownImages(text);
     final theme = Theme.of(context);
 
-    // 2. Configure the Markdown renderer
     final markdownBody = MarkdownBody(
       data: processedText,
       extensionSet: md.ExtensionSet.gitHubFlavored, // Better link/table parsing
@@ -69,11 +67,9 @@ class MarkdownContent extends StatelessWidget {
           }
         }
       },
-      // 3. Custom Image Builder to handle tapped images (full screen) and CORS proxies
       builders: {'img': _TapToOpenImageBuilder(context, linkStyle, theme)},
     );
 
-    // 4. If maxLines is set (e.g. in Feed), wrap in truncation widget
     if (maxLines != null) {
       return FadedTruncation(child: markdownBody);
     }

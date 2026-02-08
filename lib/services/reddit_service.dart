@@ -15,9 +15,6 @@ class RedditService {
 
   draw.Reddit? get _reddit => _authService.reddit;
 
-  /// Fetches posts from the home feed or a specific subreddit.
-  ///
-  /// Returns a [PostsResult] containing the list of posts and pagination cursor.
   Future<PostsResult> fetchPosts({String? subreddit, String? after}) async {
     final reddit = _reddit;
     if (reddit == null) {
@@ -45,18 +42,13 @@ class RedditService {
           nextAfterToken = content.fullname;
         }
       }
-      // Persist credentials after successful API call (token may have been refreshed)
       await _authService.persistCredentials();
     } catch (e) {
       if (e.toString().contains('401')) {
         try {
           debugPrint('401 Unauthorized, refreshing session...');
           await _authService.refreshSession();
-          // Retry the request recursively
-          // Note: To avoid infinite loops in a real specific retry function we'd add a count,
-          // but for this simple recursive retry on a specific error, it's acceptable if limited.
-          // However, here we are inside fetchPosts which returns Future<PostsResult>.
-          // We can just call fetchPosts again.
+          // Retry the request recursively (limited by stack in practice, but safe for single retry)
           return fetchPosts(subreddit: subreddit, after: after);
         } catch (refreshError) {
           debugPrint('Failed to refresh session or retry: $refreshError');
@@ -80,7 +72,6 @@ class RedditService {
       final ref = reddit.submission(id: postId);
       final submission = await ref.populate();
 
-      // Persist credentials after successful API call (token may have been refreshed)
       await _authService.persistCredentials();
 
       if (submission.comments != null) {
@@ -117,7 +108,6 @@ class RedditService {
       final ref = reddit.submission(id: postId);
       final submission = await ref.populate();
 
-      // Persist credentials after successful API call (token may have been refreshed)
       await _authService.persistCredentials();
 
       return Post.fromSubmission(submission);
@@ -144,7 +134,6 @@ class RedditService {
       await for (final sub in reddit.user.subreddits()) {
         subs.add(Subreddit.fromDraw(sub));
       }
-      // Persist credentials after successful API call (token may have been refreshed)
       await _authService.persistCredentials();
       return subs;
     } catch (e) {
@@ -172,7 +161,6 @@ class RedditService {
         query,
         includeNsfw: false,
       );
-      // Fetch full subreddit info for each result
       final List<Subreddit> subs = [];
       for (final ref in results) {
         try {
@@ -182,7 +170,6 @@ class RedditService {
           // Skip subreddits that fail to load
         }
       }
-      // Persist credentials after successful API call (token may have been refreshed)
       await _authService.persistCredentials();
       return subs;
     } catch (e) {

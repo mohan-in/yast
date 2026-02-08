@@ -23,7 +23,6 @@ class SubredditInfoCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                // Subreddit icon
                 if (subreddit.iconImg != null)
                   CircleAvatar(
                     radius: 24,
@@ -41,7 +40,6 @@ class SubredditInfoCard extends StatelessWidget {
                     ),
                   ),
                 const SizedBox(width: 12),
-                // Name and subscriber count
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,7 +76,6 @@ class SubredditInfoCard extends StatelessWidget {
                 ),
               ],
             ),
-            // Description
             if (subreddit.description != null &&
                 subreddit.description!.isNotEmpty) ...[
               const SizedBox(height: 12),

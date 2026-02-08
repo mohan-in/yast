@@ -87,36 +87,28 @@ class PostCard extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context) {
-    // Strip image URLs from content that will be displayed by _buildMedia
-    // to prevent duplicate image display
     String content = HtmlUtils.unescape(post.content);
 
-    // Collect all URLs that will be displayed as media
     final Set<String> mediaUrls = {...post.images};
     if (post.thumbnail != null) {
       mediaUrls.add(post.thumbnail!);
     }
 
-    // Remove image URLs that match media URLs (handles various formats)
+    // Remove image URLs that match media URLs to prevent duplicates
     for (final url in mediaUrls) {
-      // Try both the original URL and HTML-unescaped/escaped versions
       final unescapedUrl = url.replaceAll('&amp;', '&');
       final escapedUrl = url.replaceAll('&', '&amp;');
 
       for (final urlVariant in [url, unescapedUrl, escapedUrl]) {
-        // Remove markdown image syntax: ![alt](url) or ![](url)
         content = content.replaceAll(
           RegExp(r'!\[[^\]]*\]\(' + RegExp.escape(urlVariant) + r'\)'),
           '',
         );
-        // Remove bare URL
         content = content.replaceAll(urlVariant, '');
       }
-      // Try URL-encoded version
       content = content.replaceAll(Uri.encodeFull(url), '');
     }
 
-    // Clean up any leftover empty lines from removal
     content = content.replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
 
     if (content.isEmpty) {

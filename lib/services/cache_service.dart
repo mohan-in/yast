@@ -41,8 +41,6 @@ class CacheService {
     await box.clear();
   }
 
-  // --- Read Posts Tracking ---
-
   /// Marks a post as read.
   Future<void> markAsRead(String postId) async {
     final box = await Hive.openBox<bool>(_readPostsBoxName);

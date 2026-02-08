@@ -20,7 +20,6 @@ import 'screens/post_detail_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive for caching
   await CacheService.init();
 
   runApp(const MyApp());
@@ -65,15 +64,12 @@ class _MyAppState extends State<MyApp> {
     switch (result.type) {
       case DeepLinkType.subreddit:
         if (result.subreddit != null) {
-          // Navigate to the subreddit
           context.read<FeedNotifier>().selectSubreddit(result.subreddit);
-          // Pop to home screen if we're on a detail screen
           _navigatorKey.currentState?.popUntil((route) => route.isFirst);
         }
         break;
       case DeepLinkType.post:
         if (result.postId != null) {
-          // Show loading indicator
           final messenger = ScaffoldMessenger.of(context);
           messenger.showSnackBar(
             const SnackBar(content: Text('Opening post...')),
@@ -84,13 +80,11 @@ class _MyAppState extends State<MyApp> {
             final post = await redditService.fetchPost(result.postId!);
 
             if (post != null && context.mounted) {
-              // If subreddit is known, set it first to provide context
               if (result.subreddit != null) {
                 context.read<FeedNotifier>().selectSubreddit(result.subreddit);
                 _navigatorKey.currentState?.popUntil((route) => route.isFirst);
               }
 
-              // Navigate to post detail
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -104,7 +98,6 @@ class _MyAppState extends State<MyApp> {
               messenger.showSnackBar(
                 const SnackBar(content: Text('Failed to load post')),
               );
-              // Fallback: just open subreddit if available
               if (result.subreddit != null) {
                 context.read<FeedNotifier>().selectSubreddit(result.subreddit);
               }
@@ -119,7 +112,6 @@ class _MyAppState extends State<MyApp> {
         }
         break;
       case DeepLinkType.user:
-        // User profiles not implemented yet
         break;
       case DeepLinkType.home:
         context.read<FeedNotifier>().selectSubreddit(null);
@@ -141,14 +133,12 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // Services
         Provider(create: (_) => AuthService()),
         Provider(create: (_) => CacheService()),
         ProxyProvider<AuthService, RedditService>(
           update: (_, auth, prev) => RedditService(auth),
         ),
 
-        // Repositories
         ProxyProvider<AuthService, AuthRepository>(
           update: (_, auth, prev) => AuthRepository(auth),
         ),
@@ -159,7 +149,6 @@ class _MyAppState extends State<MyApp> {
           update: (_, reddit, prev) => SubredditRepository(reddit),
         ),
 
-        // Notifiers
         ChangeNotifierProxyProvider<AuthRepository, AuthNotifier>(
           create: (_) => AuthNotifier(),
           update: (_, repo, notifier) => notifier!..setRepository(repo),
@@ -179,7 +168,6 @@ class _MyAppState extends State<MyApp> {
       ],
       child: Builder(
         builder: (context) {
-          // Process pending deep link after providers are ready
           if (_pendingDeepLink != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (_pendingDeepLink != null) {

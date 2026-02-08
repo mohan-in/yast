@@ -24,14 +24,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
 
-  // Track last precache scroll position to throttle precaching
   double _lastPrecachePosition = 0;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_scrollListener);
-    // Initialize auth on startup
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeAuth();
     });
@@ -57,13 +55,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void _scrollListener() {
     final currentPosition = _scrollController.position.pixels;
 
-    // Load more posts when near bottom
     if (currentPosition >=
         _scrollController.position.maxScrollExtent - kPaginationThreshold) {
       context.read<FeedNotifier>().loadPosts();
     }
 
-    // Precache images as user scrolls (throttled)
     if ((currentPosition - _lastPrecachePosition).abs() >=
         kPrecacheScrollThreshold) {
       _lastPrecachePosition = currentPosition;
@@ -93,14 +89,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final feedNotifier = context.read<FeedNotifier>();
     final posts = feedNotifier.visiblePosts;
 
-    // Calculate roughly which posts are visible
     final scrollPosition = _scrollController.hasClients
         ? _scrollController.position.pixels
         : 0.0;
     final estimatedVisibleIndex = (scrollPosition / kEstimatedPostCardHeight)
         .floor();
 
-    // Prefetch posts beyond the visible area
     final startIndex = (estimatedVisibleIndex + kVisiblePostsBeforePrefetch)
         .clamp(0, posts.length);
     final endIndex = (startIndex + kPrefetchPostCount).clamp(0, posts.length);
@@ -111,20 +105,14 @@ class _HomeScreenState extends State<HomeScreen> {
       // Collect all image URLs for this post (carousel or single image)
       final imagesToCache = <String>[];
 
-      // Add carousel images
       if (post.images.isNotEmpty) {
         imagesToCache.addAll(post.images);
-      }
-      // Add single image if exists and not already in carousel
-      else if (post.imageUrl != null) {
+      } else if (post.imageUrl != null) {
         imagesToCache.add(post.imageUrl!);
-      }
-      // Add thumbnail as fallback
-      else if (post.thumbnail != null) {
+      } else if (post.thumbnail != null) {
         imagesToCache.add(post.thumbnail!);
       }
 
-      // Precache all images for this post
       for (final imageUrl in imagesToCache) {
         precacheImage(
           CachedNetworkImageProvider(
@@ -152,7 +140,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final subredditsNotifier = context.watch<SubredditsNotifier>();
     final redditService = context.read<RedditService>();
 
-    // Handle back gesture: go to home feed if viewing a subreddit
     return PopScope(
       canPop: feedNotifier.currentSubreddit == null,
       onPopInvokedWithResult: (didPop, result) {
@@ -172,7 +159,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   } else {
                     context.read<FeedNotifier>().selectSubredditWithInfo(sub);
                   }
-                  // Close drawer
                   Navigator.pop(context);
                 },
                 onLogout: _handleLogout,

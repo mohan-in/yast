@@ -17,7 +17,6 @@ class CommentTile extends StatefulWidget {
 class _CommentTileState extends State<CommentTile> {
   bool _isCollapsed = false;
 
-  // Define rainbow colors for depth lines
   static const List<Color> _depthColors = [
     Colors.red,
     Colors.orange,
@@ -39,19 +38,16 @@ class _CommentTileState extends State<CommentTile> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    // Select color based on reply depth (next level)
     final nextDepth = widget.depth + 1;
     final depthColor = _depthColors[widget.depth % _depthColors.length];
 
-    // Build the content of the comment tile (header, body, replies)
-    Widget content = Column(
+    final Widget content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Comment Content
         InkWell(
           onTap: _toggleCollapse,
           child: Padding(
-            // Reduced horizontal padding from 16.0 to 8.0 to save space
             padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,7 +56,6 @@ class _CommentTileState extends State<CommentTile> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header
                       Row(
                         children: [
                           Text(
@@ -97,7 +92,6 @@ class _CommentTileState extends State<CommentTile> {
                         ],
                       ),
 
-                      // Body (if not collapsed)
                       if (!_isCollapsed) ...[
                         const SizedBox(height: 4),
                         ...widget.comment.body
@@ -123,20 +117,17 @@ class _CommentTileState extends State<CommentTile> {
           ),
         ),
 
-        // Replies
         if (!_isCollapsed && widget.comment.replies.isNotEmpty)
           IntrinsicHeight(
             child: Row(
               children: [
                 Expanded(
                   child: Container(
-                    // Reduced indentation margin from 16.0 to 8.0
                     margin: const EdgeInsets.only(left: 8.0),
                     decoration: BoxDecoration(
                       border: Border(
                         left: BorderSide(
-                          // Apply rainbow color to the border
-                          color: depthColor.withOpacity(0.5),
+                          color: depthColor.withAlpha(128),
                           width: 2.0,
                         ),
                       ),
@@ -157,7 +148,6 @@ class _CommentTileState extends State<CommentTile> {
       ],
     );
 
-    // If this is a top-level comment (depth 0), wrap it in a Card
     if (widget.depth == 0) {
       return Card(
         margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),

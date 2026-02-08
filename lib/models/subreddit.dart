@@ -53,13 +53,11 @@ class Subreddit {
 
     if (icon != null && icon.isEmpty) icon = null;
 
-    // Extract subscriber count from the raw data
     int? subscribers;
     if (sub.data != null && sub.data!['subscribers'] != null) {
       subscribers = sub.data!['subscribers'] as int?;
     }
 
-    // Extract public description
     String? description;
     if (sub.data != null && sub.data!['public_description'] != null) {
       description = sub.data!['public_description'] as String?;

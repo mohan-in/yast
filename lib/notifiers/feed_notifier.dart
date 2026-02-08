@@ -41,10 +41,8 @@ class FeedNotifier extends ChangeNotifier {
 
     final isFirstLoad = _posts.isEmpty && !refresh;
 
-    // Load read post IDs for filtering
     _readPostIds = await _repository!.getReadPostIds();
 
-    // Load from cache first for instant display
     if (isFirstLoad) {
       _isLoadingFromCache = true;
       notifyListeners();
@@ -72,7 +70,7 @@ class FeedNotifier extends ChangeNotifier {
               useCache: false,
             );
 
-      // Deduplicate posts when appending
+      // Deduplicate posts when appending to avoid "duplicate key" errors in lists
       final existingIds = _posts.map((p) => p.id).toSet();
       final uniqueNewPosts = result.posts
           .where((p) => !existingIds.contains(p.id))

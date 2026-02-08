@@ -19,11 +19,9 @@ class PostRepository {
     String? after,
     bool useCache = true,
   }) async {
-    // Load from cache first if this is the initial load
     if (useCache && after == null) {
       final cached = await _cacheService.getCachedPosts(subreddit);
       if (cached.isNotEmpty) {
-        // Still fetch fresh data but return cached immediately
         _fetchAndCacheInBackground(subreddit);
         return (posts: cached, nextAfter: null);
       }
@@ -44,7 +42,6 @@ class PostRepository {
       subreddit: subreddit,
       after: after,
     );
-    // Cache first page of results
     if (after == null) {
       await _cacheService.cachePosts(subreddit, result.posts);
     }

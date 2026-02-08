@@ -10,7 +10,6 @@ class SubredditsNotifier extends ChangeNotifier {
 
   List<Subreddit> get subreddits => _subreddits;
 
-  /// Sets the repository. Called by ProxyProvider.
   void setRepository(SubredditRepository repository) {
     _repository = repository;
   }

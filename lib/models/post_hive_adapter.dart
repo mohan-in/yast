@@ -2,8 +2,6 @@ import 'package:hive/hive.dart';
 import 'post.dart';
 
 /// Hive TypeAdapter for the Post class.
-/// Since Post has many fields, we manually implement the adapter
-/// instead of using code generation for simplicity.
 class PostAdapter extends TypeAdapter<Post> {
   @override
   final int typeId = 0;
@@ -37,7 +35,7 @@ class PostAdapter extends TypeAdapter<Post> {
   @override
   void write(BinaryWriter writer, Post obj) {
     writer
-      ..writeByte(16) // Number of fields
+      ..writeByte(16)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)

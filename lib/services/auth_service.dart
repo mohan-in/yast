@@ -31,7 +31,6 @@ class AuthService {
     if (_reddit == null) return false;
     try {
       final credentials = _reddit!.auth.credentials;
-      // A session is valid if we have a refresh token (for permanent sessions)
       return credentials.refreshToken != null;
     } catch (_) {
       return false;
@@ -45,15 +44,12 @@ class AuthService {
 
     try {
       final currentCredentials = _reddit!.auth.credentials.toJson();
-      // Only save if credentials have changed to avoid unnecessary writes
       if (currentCredentials != _lastSavedCredentials) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_credentialsKey, currentCredentials);
         _lastSavedCredentials = currentCredentials;
       }
-    } catch (_) {
-      // Silently fail - we don't want to crash the app if credential saving fails
-    }
+    } catch (_) {}
   }
 
   /// Initializes the data source, restoring the session if available.
@@ -72,8 +68,6 @@ class AuthService {
         );
         _lastSavedCredentials = credentialsJson;
 
-        // If the access token is expired but we have a refresh token,
-        // proactively refresh to ensure the session is ready
         if (!_reddit!.auth.isValid && isLoggedIn) {
           await refreshSession();
         }
@@ -91,8 +85,6 @@ class AuthService {
         await _reddit!.auth.refresh();
         await persistCredentials();
       } catch (_) {
-        // If refresh fails, we might want to let the caller handle it
-        // or just silently fail. Retrowing allows the caller to know request failed.
         rethrow;
       }
     }

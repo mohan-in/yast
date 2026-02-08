@@ -45,7 +45,6 @@ class _RedditVideoPlayerState extends State<RedditVideoPlayer> {
       _chewieController = ChewieController(
         videoPlayerController: _videoPlayerController,
         aspectRatio: _videoPlayerController.value.aspectRatio,
-        looping: true,
         showControls: false, // Hide controls inline to behave like an image
         showControlsOnInitialize: false,
         deviceOrientationsOnEnterFullScreen: [
@@ -96,7 +95,7 @@ class _RedditVideoPlayerState extends State<RedditVideoPlayer> {
     if (_isFullScreenActive) return;
 
     if (info.visibleFraction > 0.6) {
-      _isVisible = true; // Mark as visible
+      _isVisible = true;
       if (widget.autoPlay && !_chewieController!.isPlaying) {
         _chewieController!.play();
       }
@@ -160,7 +159,6 @@ class _RedditVideoPlayerState extends State<RedditVideoPlayer> {
       );
     }
 
-    // Only wrap with VisibilityDetector if autoPlay is enabled to handle feed behavior
     if (widget.autoPlay) {
       return VisibilityDetector(
         key: Key(widget.videoUrl),
