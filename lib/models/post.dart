@@ -86,13 +86,17 @@ class Post {
     }
 
     // Check for direct URL if it's an image
-    if (imageUrl == null) {
-      final String url = submission.url.toString();
-      if (url.endsWith('.jpg') ||
-          url.endsWith('.jpeg') ||
-          url.endsWith('.png') ||
-          url.endsWith('.gif')) {
-        imageUrl = url;
+    // If imageUrl creates a static preview but url is a gif, prefer the gif!
+    final String url = submission.url.toString();
+    if (!isVideo) {
+      if (url.endsWith('.gif')) {
+        imageUrl = url; // Force use the GIF url
+      } else if (imageUrl == null) {
+        if (url.endsWith('.jpg') ||
+            url.endsWith('.jpeg') ||
+            url.endsWith('.png')) {
+          imageUrl = url;
+        }
       }
     }
 
@@ -103,14 +107,88 @@ class Post {
       // 1. Try extracting from main post data
       videoUrl = _extractVideoUrl(data);
 
+      // If no video found yet, check for MP4 variant in preview (common for GIFs)
+      if (videoUrl == null &&
+          data['preview'] != null &&
+          data['preview']['images'] != null &&
+          (data['preview']['images'] as List).isNotEmpty) {
+        final imageMap = data['preview']['images'][0] as Map;
+        if (imageMap['variants'] != null &&
+            imageMap['variants']['mp4'] != null) {
+          final mp4Variant = imageMap['variants']['mp4'];
+          if (mp4Variant['source'] != null &&
+              mp4Variant['source']['url'] != null) {
+            videoUrl = HtmlUtils.unescape(
+              mp4Variant['source']['url'] as String,
+            );
+            isVideo = true;
+          }
+        }
+      }
+
       // 2. If no video found, check if it's a crosspost
-      if (videoUrl == null && data['crosspost_parent_list'] != null) {
+      if (data['crosspost_parent_list'] != null) {
         final List crossposts = data['crosspost_parent_list'];
         if (crossposts.isNotEmpty) {
           final parentData = crossposts[0] as Map;
-          videoUrl = _extractVideoUrl(parentData);
+
+          // Try to get video from parent
+          videoUrl ??= _extractVideoUrl(parentData);
+
           if (videoUrl != null) {
             isVideo = true;
+          }
+
+          // If still no video, check parent for MP4 variant in preview
+          if (videoUrl == null &&
+              parentData['preview'] != null &&
+              parentData['preview']['images'] != null &&
+              (parentData['preview']['images'] as List).isNotEmpty) {
+            final imageMap = parentData['preview']['images'][0] as Map;
+            if (imageMap['variants'] != null &&
+                imageMap['variants']['mp4'] != null) {
+              final mp4Variant = imageMap['variants']['mp4'];
+              if (mp4Variant['source'] != null &&
+                  mp4Variant['source']['url'] != null) {
+                videoUrl = HtmlUtils.unescape(
+                  mp4Variant['source']['url'] as String,
+                );
+                isVideo = true;
+              }
+            }
+          }
+
+          // Try to extract images/gallery from parent if main post has none
+          if (images.isEmpty && imageUrl == null) {
+            _parseGalleryData(parentData.cast<String, dynamic>(), images);
+
+            // Check parent URL for direct image
+            if (parentData['url'] != null) {
+              final String pUrl = parentData['url'].toString();
+              if (pUrl.endsWith('.jpg') ||
+                  pUrl.endsWith('.jpeg') ||
+                  pUrl.endsWith('.png') ||
+                  pUrl.endsWith('.gif')) {
+                imageUrl = pUrl;
+                // If checking parent URL, we should also check if it's a GIF
+                // But generally if it's a GIF repost, we handled it as video via preview above
+                // or we fall back to imageUrl here.
+              }
+            }
+
+            // Check parent preview if still no image
+            if (imageUrl == null &&
+                parentData['preview'] != null &&
+                parentData['preview']['images'] != null &&
+                (parentData['preview']['images'] as List).isNotEmpty) {
+              final imageMap = parentData['preview']['images'][0] as Map;
+              if (imageMap['source'] != null &&
+                  imageMap['source']['url'] != null) {
+                imageUrl = HtmlUtils.unescape(
+                  imageMap['source']['url'] as String,
+                );
+              }
+            }
           }
         }
       }
