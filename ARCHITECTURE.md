@@ -39,11 +39,14 @@ lib/
 ├── models/                # Data classes
 │   ├── post.dart
 │   ├── comment.dart
-│   └── subreddit.dart
+│   ├── subreddit.dart
+│   ├── post_hive_adapter.dart # Hive TypeAdapter
+│   └── models.dart            # Barrel file
 ├── services/              # Raw data access
 │   ├── auth_service.dart      # OAuth authentication
 │   ├── reddit_service.dart    # Reddit API calls
-│   └── cache_service.dart     # Hive local storage
+│   ├── cache_service.dart     # Hive local storage
+│   └── deep_link_service.dart # Deep linking logic
 ├── repositories/          # Business logic
 │   ├── auth_repository.dart
 │   ├── post_repository.dart
@@ -73,6 +76,7 @@ Raw data access—no business logic.
 | `AuthService` | OAuth2 flow, token storage |
 | `RedditService` | Reddit API calls via `draw` package |
 | `CacheService` | Hive-based post caching, read tracking |
+| `DeepLinkService` | Handles incoming deep links (cold/warm start) |
 
 ### Repositories
 Orchestrate services, apply business rules.
@@ -92,6 +96,24 @@ Hold reactive state, notify UI of changes.
 | `FeedNotifier` | `posts`, `currentSubreddit`, `hideRead` | `loadPosts()`, `selectSubreddit()` |
 | `SubredditsNotifier` | `subreddits` | `fetch()` |
 | `SearchNotifier` | `query`, `results` | `search()` |
+
+
+
+---
+
+## Key Concepts & Patterns
+
+### Barrel Files
+Files like `models/models.dart`, `widgets/widgets.dart`, and `utils/utils.dart` are "barrel files". They export all files in their directory to simplify imports elsewhere.
+- **Convention**: Keep them clean, containing *only* export statements.
+
+### Local Caching (Hive)
+- **Manual Serialization**: `PostAdapter` in `models/post_hive_adapter.dart` manually implements `TypeAdapter<Post>` to avoid code generation overhead for complex objects.
+- **Service**: `CacheService` manages the Hive boxes.
+
+### Deep Linking
+- **Service**: `DeepLinkService` uses `app_links` to handle universal links and custom schemes.
+- **Logic**: Parses URLs (e.g., `/r/flutter`) into `DeepLinkResult` objects which `main.dart` uses to navigate.
 
 ---
 
