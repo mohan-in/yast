@@ -4,7 +4,6 @@ import '../models/comment.dart';
 import '../services/reddit_service.dart';
 import '../widgets/post_card.dart';
 import '../widgets/comment_tile.dart';
-import '../utils/html_utils.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final Post post;
@@ -32,9 +31,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(HtmlUtils.unescape(widget.post.title))),
       body: CustomScrollView(
         slivers: [
+          SliverAppBar(pinned: true, title: Text('r/${widget.post.subreddit}')),
           SliverToBoxAdapter(
             child: PostCard(
               post: widget.post,
@@ -43,10 +42,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
               child: Text(
                 'Comments',
-                style: Theme.of(context).textTheme.headlineSmall,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
             ),
           ),

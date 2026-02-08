@@ -27,19 +27,21 @@ class PostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.all(8.0),
+      elevation: 2,
+      clipBehavior: Clip.antiAlias,
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(context),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               _buildTitle(context),
               if (post.content.isNotEmpty) _buildContent(context),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               _buildMedia(),
               PostMetadata(
                 createdUtc: post.createdUtc,
@@ -55,18 +57,21 @@ class PostCard extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       children: [
         Text(
           'r/${post.subreddit}',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          style: theme.textTheme.labelMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.primary,
+            color: theme.colorScheme.primary,
           ),
         ),
         Text(
           ' • u/${post.author}',
-          style: Theme.of(context).textTheme.labelSmall,
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );

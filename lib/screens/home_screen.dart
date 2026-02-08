@@ -161,24 +161,60 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            feedNotifier.currentSubreddit != null
-                ? 'r/${feedNotifier.currentSubreddit}'
-                : (authNotifier.isLoggedIn ? 'Home' : 'YARC'),
-          ),
-          actions: _buildAppBarActions(authNotifier, feedNotifier),
-        ),
         drawer: !authNotifier.isLoggedIn
             ? null
             : AppDrawer(
                 subreddits: subredditsNotifier.subreddits,
+                currentSubreddit: feedNotifier.currentSubreddit,
                 onSubredditSelected: (sub) {
-                  context.read<FeedNotifier>().selectSubredditWithInfo(sub);
+                  if (sub == null) {
+                    context.read<FeedNotifier>().selectSubreddit(null);
+                  } else {
+                    context.read<FeedNotifier>().selectSubredditWithInfo(sub);
+                  }
+                  // Close drawer
+                  Navigator.pop(context);
                 },
                 onLogout: _handleLogout,
               ),
-        body: _buildBody(authNotifier, feedNotifier, redditService),
+        body: RefreshIndicator(
+          onRefresh: () => context.read<FeedNotifier>().refresh(),
+          child: CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              SliverAppBar(
+                floating: true,
+                title: Text(
+                  feedNotifier.currentSubreddit != null
+                      ? 'r/${feedNotifier.currentSubreddit}'
+                      : (authNotifier.isLoggedIn ? 'Home' : 'YARC'),
+                ),
+                actions: _buildAppBarActions(authNotifier, feedNotifier),
+              ),
+              if (!authNotifier.isLoggedIn &&
+                  feedNotifier.currentSubreddit == null)
+                SliverFillRemaining(child: LoginPrompt(onLogin: _handleLogin))
+              else
+                SliverPostList(
+                  posts: feedNotifier.visiblePosts,
+                  isLoading: feedNotifier.isLoading,
+                  subredditInfo: feedNotifier.currentSubredditInfo,
+                  onPostTap: (post) {
+                    context.read<FeedNotifier>().markAsRead(post.id);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PostDetailScreen(
+                          post: post,
+                          redditService: redditService,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -239,35 +275,5 @@ class _HomeScreenState extends State<HomeScreen> {
     if (selectedSubreddit != null && mounted) {
       context.read<FeedNotifier>().selectSubredditWithInfo(selectedSubreddit);
     }
-  }
-
-  Widget _buildBody(
-    AuthNotifier authNotifier,
-    FeedNotifier feedNotifier,
-    RedditService redditService,
-  ) {
-    // Show login prompt if not logged in and no subreddit selected
-    if (!authNotifier.isLoggedIn && feedNotifier.currentSubreddit == null) {
-      return LoginPrompt(onLogin: _handleLogin);
-    }
-
-    // Show post list with optional subreddit info card
-    return PostList(
-      posts: feedNotifier.visiblePosts,
-      isLoading: feedNotifier.isLoading,
-      scrollController: _scrollController,
-      subredditInfo: feedNotifier.currentSubredditInfo,
-      onRefresh: () => context.read<FeedNotifier>().refresh(),
-      onPostTap: (post) {
-        context.read<FeedNotifier>().markAsRead(post.id);
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                PostDetailScreen(post: post, redditService: redditService),
-          ),
-        );
-      },
-    );
   }
 }
